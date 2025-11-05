@@ -1,0 +1,464 @@
+enabled,ability,description
+0,TAUNT_TAUNT,
+0,STOP_STOP,
+0,STOP_HOLDFIRESPECIAL,
+0,STOP_CHEER,
+0,STOP_DANCE,
+0,STOP_REDIRECT,
+0,STOP_BUILDING,
+0,STOP_BATTLECRUISER,
+0,HOLDPOSITION_HOLD,
+0,SCANNERSWEEP_SCAN,
+0,SCAN_MOVE,
+0,SMART,
+0,MOVE_TURN,
+0,PATROL,
+0,HARVEST_RETURN_SCV,
+0,RALLY_BUILDING,
+0,RALLY_MORPHING_UNIT,
+0,RALLY_COMMANDCENTER,
+0,RALLY_NEXUS,
+0,RALLY_HATCHERY_UNITS,
+0,RALLY_HATCHERY_WORKERS,
+0,RALLY_UNITS,
+0,RALLY_WORKERS,
+0,CANCEL_GRAVITONBEAM,
+0,CANCEL_NEURALPARASITE,
+0,CANCEL_QUEUE1,
+0,CANCEL_QUEUE5,
+0,CANCEL_QUEUECANCELTOSELECTION,
+0,CANCEL_QUEUEADDON,
+0,CANCEL_BUILDINPROGRESS,
+0,CANCEL_BARRACKSADDON,
+0,CANCEL_FACTORYADDON,
+0,CANCEL_STARPORTADDON,
+0,CANCEL_HANGARQUEUE5,
+0,CANCEL_MORPHLAIR,
+0,CANCEL_MORPHHIVE,
+0,CANCEL_MORPHGREATERSPIRE,
+0,CANCEL_MORPHBROODLORD,
+0,CANCEL_MORPHOVERSEER,
+0,CANCEL_MORPHPLANETARYFORTRESS,
+0,CANCEL_MORPHORBITAL,
+0,CANCEL_NUKE,
+0,CANCEL_SPINECRAWLERROOT,
+0,CANCEL_SPORECRAWLERROOT,
+0,CANCEL_CREEPTUMOR,
+0,CANCEL_QUEUEPASIVE,
+0,CANCEL_QUEUEPASSIVECANCELTOSELECTION,
+0,CANCEL_MORPHMOTHERSHIP,
+0,CANCEL_MORPHRAVAGER,
+0,CANCEL_MORPHLURKER,
+0,CANCEL_LOCKON,
+0,CANCEL_MORPHTHOREXPLOSIVEMODE,
+0,CANCEL_STASISTRAP,
+0,CANCEL_ADEPTPHASESHIFT,
+0,CANCEL_ADEPTSHADEPHASESHIFT,
+0,CANCEL_MORPHOVERLORDTRANSPORT,
+0,CANCEL_LAST,
+0,CANCEL_SLOT,
+0,CANCEL_VOIDRAYPRISMATICALIGNMENT,
+0,HALT_TERRANBUILD,
+0,HALT_BUILDING,
+0,BUILDINPROGRESSNYDUSCANAL_CANCEL,
+0,PROTOSSBUILD_CANCEL,
+0,BROODLORDQUEUE2_CANCEL,
+0,BROODLORDQUEUE2_CANCELSLOT,
+0,ZERGBUILD_CANCEL,
+0,BURROWBANELINGDOWN_CANCEL,
+0,BURROWDRONEDOWN_CANCEL,
+0,BURROWHYDRALISKDOWN_CANCEL,
+0,BURROWROACHDOWN_CANCEL,
+0,BURROWZERGLINGDOWN_CANCEL,
+0,MERGEABLE_CANCEL,
+0,WARPABLE_CANCEL,
+0,BURROWQUEENDOWN_CANCEL,
+0,BURROWINFESTORDOWN_CANCEL,
+0,UPGRADETOWARPGATE_CANCEL,
+0,MORPHBACKTOGATEWAY_CANCEL,
+0,FORCEFIELD_CANCEL,
+0,PHASINGMODE_CANCEL,
+0,TRANSPORTMODE_CANCEL,
+0,QUEENBUILD_CANCEL,
+0,SPINECRAWLERUPROOT_CANCEL,
+0,SPORECRAWLERUPROOT_CANCEL,
+0,BUILDNYDUSCANAL_CANCEL,
+0,MORPHTOCOLLAPSIBLETERRANTOWERDEBRIS_CANCEL,
+0,MORPHTOCOLLAPSIBLETERRANTOWERDEBRISRAMPLEFT_CANCEL,
+0,MORPHTOCOLLAPSIBLETERRANTOWERDEBRISRAMPRIGHT_CANCEL,
+0,MORPHTOCOLLAPSIBLEROCKTOWERDEBRIS_CANCEL,
+0,MORPHTOSWARMHOSTBURROWEDMP_CANCEL,
+0,TESTZERG_CANCEL,
+0,WIDOWMINEBURROW_CANCEL,
+0,BURROWLURKERMPDOWN_CANCEL,
+0,MORPHTOCOLLAPSIBLEROCKTOWERDEBRISRAMPRIGHT_CANCEL,
+0,MORPHTOCOLLAPSIBLEROCKTOWERDEBRISRAMPLEFT_CANCEL,
+0,BURROWRAVAGERDOWN_CANCEL,
+0,THORAPMODE_CANCEL,
+0,MORPHTOGUARDIANMP_CANCEL,
+0,MORPHTODEVOURERMP_CANCEL,
+0,DEFILERMPBURROW_CANCEL,
+0,MORPHTOCOLLAPSIBLEPURIFIERTOWERDEBRIS_CANCEL,
+0,CHANNELSNIPE_CANCEL,
+0,MORPHTOCOLLAPSIBLEROCKTOWERDEBRISRAMPLEFTGREEN_CANCEL,
+0,MORPHTOCOLLAPSIBLEROCKTOWERDEBRISRAMPRIGHTGREEN_CANCEL,
+0,MORPHTOBANELING_CANCEL,
+0,LIFT_COMMANDCENTER,
+0,LIFT_BARRACKS,
+0,LIFT_FACTORY,
+0,LIFT_STARPORT,
+0,LIFT_ORBITALCOMMAND,
+0,LIFT,
+0,LAND_COMMANDCENTER,
+0,LAND_FACTORY,
+0,LAND_STARPORT,
+0,LAND_BARRACKS,
+0,LAND_ORBITALCOMMAND,
+0,LAND,
+0,SALVAGEEFFECT_SALVAGE,
+1,ATTACK_ATTACK,Attack some unit or structure.
+1,ATTACK_ATTACKTOWARDS,Attack towards target position.
+1,ATTACK_ATTACKBARRAGE,Attack barrage.
+1,MOVE_MOVE,Move to target position.
+0,PATROL_PATROL,Command unit to patrol from current position to target position.
+1,ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL1,"Increase the armor of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
+1,ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL2,"Increase the armor of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
+1,ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL3,"Increase the armor of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
+1,ARMORYRESEARCH_TERRANSHIPWEAPONSLEVEL1,"Increase the damage of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
+1,ARMORYRESEARCH_TERRANSHIPWEAPONSLEVEL2,"Increase the damage of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
+1,ARMORYRESEARCH_TERRANSHIPWEAPONSLEVEL3,"Increase the damage of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
+1,ARMORYRESEARCH_TERRANVEHICLEPLATINGLEVEL1,"Increase the armor of Terran Factory units (Hellion, Siege Tank, Cyclone, Hellbat, and Thor)."
+1,ARMORYRESEARCH_TERRANVEHICLEPLATINGLEVEL2,"Increase the armor of Terran Factory units (Hellion, Siege Tank, Cyclone, Hellbat, and Thor)."
+1,ARMORYRESEARCH_TERRANVEHICLEPLATINGLEVEL3,"Increase the armor of Terran Factory units (Hellion, Siege Tank, Cyclone, Hellbat, and Thor)."
+1,ARMORYRESEARCH_TERRANVEHICLEWEAPONSLEVEL1,"Increase the damage of Terran Factory units (Hellion, Siege Tank, Cyclone, Hellbat, and Thor)."
+1,ARMORYRESEARCH_TERRANVEHICLEWEAPONSLEVEL2,"Increase the damage of Terran Factory units (Hellion, Siege Tank, Cyclone, Hellbat, and Thor)."
+1,ARMORYRESEARCH_TERRANVEHICLEWEAPONSLEVEL3,"Increase the damage of Terran Factory units (Hellion, Siege Tank, Cyclone, Hellbat, and Thor)."
+1,ARMORYRESEARCH_TERRANVEHICLEANDSHIPPLATINGLEVEL1,Increases the armor of Terran Factory and Starport units.
+1,ARMORYRESEARCH_TERRANVEHICLEANDSHIPPLATINGLEVEL2,Increases the armor of Terran Factory and Starport units.
+1,ARMORYRESEARCH_TERRANVEHICLEANDSHIPPLATINGLEVEL3,Increases the armor of Terran Factory and Starport units.
+1,BARRACKSTECHLABRESEARCH_STIMPACK,Every Marine and Marauder gain the Stimpack ability.
+1,BARRACKSTRAIN_GHOST,"Train a Ghost, a stealthy special forces unit that can snipe high-value targets, deploy tactical nukes, and use cloaking for strategic advantage."
+1,BARRACKSTRAIN_MARAUDER,"Train a Marauder, a heavily armored infantry unit that excels against armored targets with its concussive grenades, complementing Marine forces."
+1,BARRACKSTRAIN_MARINE,"Train a Marine, a versatile, low-cost infantry unit that provides reliable ranged damage and forms the backbone of most Terran armies."
+1,BARRACKSTRAIN_REAPER,"Train a Reaper, a fast, mobile infantry unit designed for early-game harassment and scouting, capable of jumping cliffs with its jetpack."
+1,ATTACK_BATTLECRUISER,Command Battlecruiser to attack.
+1,BATTLECRUISERATTACK_ATTACKTOWARDS,Conduct mobile attacks on the target.
+1,BATTLECRUISERATTACK_ATTACKBARRAGE,Launch artillery attacks on the target.
+1,MOVE_BATTLECRUISER,Command Battlecruiser to move.
+0,PATROL_BATTLECRUISER,
+0,HOLDPOSITION_BATTLECRUISER,
+0,BATTLECRUISERMOVE_ACQUIREMOVE,"Refines movement capabilities, enhancing maneuverability in combat scenarios."
+0,BATTLECRUISERMOVE_TURN,"Adjusts the turning radius of the Battlecruiser, improving its ability to engage targets effectively."
+0,STOP_BATTLECRUISER,Immediately halts all movement and actions of the Battlecruiser.
+0,BATTLECRUISERSTOP_HOLDFIRE,
+0,BATTLECRUISERSTOP_CHEER,
+0,BATTLECRUISERSTOP_DANCE,
+1,BEHAVIOR_CLOAKON_BANSHEE,The Benshee becomes invisible until it runs out of energy or the player cancels Cloak.
+1,BEHAVIOR_CLOAKON_GHOST,The Ghost becomes invisible until it runs out of energy or the player cancels Cloak.
+1,BEHAVIOR_HOLDFIREON_GHOST,Do not actively attack the enemy.
+1,BUILDAUTOTURRET_AUTOTURRET,"Build an Auto-Turret, a temporary and immobile defense structure."
+1,BUILD_NUKE,Build a nuke.
+1,BUILD_REACTOR_BARRACKS,Allows structure create 2 units simultaneously.
+1,BUILD_REACTOR_FACTORY,Allows structure create 2 units simultaneously.
+1,BUILD_REACTOR_STARPORT,Allows structure create 2 units simultaneously.
+1,BUILD_TECHLAB_BARRACKS,Unlocks Marauder and is a requirement for Ghost.
+1,BUILD_TECHLAB_FACTORY,Unlocks Siege Tank and is a requirement for Thor.
+1,BUILD_TECHLAB_STARPORT,Unlocks Raven and Banshee and is a requirement for Battlecruiser.
+0,BURROWDOWN_DRONE,
+0,BURROWDOWN_HYDRALISK,
+0,BURROWDOWN_ROACH,
+0,BURROWDOWN_ZERGLING,
+0,BURROWDOWN_INFESTORTERRAN,
+0,BURROWDOWN_QUEEN,
+0,BURROWDOWN_INFESTOR,
+0,BURROWDOWN_ULTRALISK,
+0,BURROWDOWN_RAVAGER,
+0,BURROWDOWN_SWARMHOST,
+0,BURROWDOWN_WIDOWMINE,
+0,BURROWDOWN_BANELING,
+1,BURROWUP_WIDOWMINE,Enables the Widow Mine to emerge from the ground and regain mobility.
+1,CALLDOWNMULE_CALLDOWNMULE,"Calls down a MULE, a temporary unit with a timed life of 64 seconds that can mine minerals and repair for the Terran forces."
+1,COMMANDCENTERTRAIN_SCV,"Train a SCV, a Terran worker."
+1,EFFECT_ANTIARMORMISSILE,"Deploys a Missile which pursues the target unit, and, upon contact, reduces the armor and shield armor of affected units by 2 for 21 seconds."
+1,EFFECT_GHOSTSNIPE,Deal 25 damage to enemy biological units (50 for Psionic).
+1,EFFECT_INTERFERENCEMATRIX,Disables a target unit rendering it unable to attack or use abilities for 11 seconds. Reveals Cloaked units. Can only target mechanical and psionic units.
+1,EFFECT_MEDIVACIGNITEAFTERBURNERS,Speed boost that increases Medivac's movement speed to 5.95 and acceleration to 1400 for 4.3 seconds.
+0,EFFECT_REPAIR_MULE,Repair some unit or strcture.
+0,EFFECT_REPAIR_SCV,Repair some unit or strcture.
+0,EFFECT_SALVAGE,"Destroy a Bunker, returning 75 minerals."
+0,EFFECT_SPRAY_TERRAN,Spray a marker.
+0,EFFECT_SPRAY_PROTOSS,Spray a marker.
+0,EFFECT_SPRAY_ZERG,Spray a marker.
+1,EFFECT_STIM_MARAUDER,Increases the movement speed and firing rate by 50% at the cost of 20 HP.
+1,EFFECT_STIM_MARINE,Increases the movement speed and firing rate by 50% at the cost of 10 HP.
+1,EFFECT_STIM_MARINE_REDIRECT,Increases inner Marine movement speed and firing rate by 50% at the cost of 10 HP.
+1,EFFECT_STIM_MARAUDER_REDIRECT,Increases inner Marauder movement speed and firing rate by 50% at the cost of 20 HP.
+1,EFFECT_TACTICALJUMP,"After 4 seconds, warps to the target location. Battlecruiser is invincible while warping. Stuns and puts the Battlecruiser into a 1 second vulnerability phase before it teleports. In this state, the Battlecruiser can be damaged, but Tactical Jump may not be canceled."
+1,EMP_EMP,The Ghost fires an EMP Round that removes up to 100 shields and energy from every unit and building within the AoE. Also reveals cloaked units.
+1,ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL1,"Increase the armor of Terran infantry units (Ghost, Marauder, Reaper, Marine, SCV)."
+1,ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL2,"Increase the armor of Terran infantry units (Ghost, Marauder, Reaper, Marine, SCV)."
+1,ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL3,"Increase the armor of Terran infantry units (Ghost, Marauder, Reaper, Marine, SCV)."
+1,ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL1,"Increase the damage of Terran infantry units (Ghost, Marauder, Reaper, Marine)."
+1,ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL2,"Increase the damage of Terran infantry units (Ghost, Marauder, Reaper, Marine)."
+1,ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL3,"Increase the damage of Terran infantry units (Ghost, Marauder, Reaper, Marine)."
+1,FACTORYTRAIN_HELLION,"Train a Hellion, a fast harassment vehicle that incinerates light ground units in a line."
+1,FACTORYTRAIN_SIEGETANK,"Train a Siege Tank, a transforming artillery unit that bombards ground targets from long range with devastating area-of-effect damage."
+1,FACTORYTRAIN_THOR,"Train a Thor, a heavily-armored combat walker that excels against massive ground units and light air fleets."
+1,FACTORYTRAIN_WIDOWMINE,"Train a Widow Mine, a burrowing trap that launches a devastating missile at the first enemy ground or air unit to cross its path."
+0,HALT,
+0,HALT_BUILDING,
+0,HALT_TERRANBUILD,
+0,HARVEST_GATHER,
+0,HARVEST_GATHER_DRONE,
+0,HARVEST_GATHER_MULE,
+0,HARVEST_GATHER_PROBE,
+0,HARVEST_GATHER_SCV,
+0,HARVEST_RETURN,
+0,HARVEST_RETURN_DRONE,
+0,HARVEST_RETURN_MULE,
+0,HARVEST_RETURN_PROBE,
+0,HOLDPOSITION,
+1,KD8CHARGE_KD8CHARGE,"Explodes after a short delay, dealing 5 damage and knocking back nearby units."
+0,LOADALL_COMMANDCENTER,
+1,LOAD_BUNKER,Load a unit into a Bunker.
+0,LOAD_MEDIVAC,Load a unit into a Medivac.
+1,LOCKON_LOCKON,"Locks the Cyclone's weapons on the target unit, increasing the Cyclone's range to 9 and allowing it to move while firing. Canceled if the target moves out of range (9) or vision."
+1,MEDIVACHEAL_HEAL,Enables a Medivac to heal nearby injured units.
+1,MORPH_HELLBAT,"Transforms the Hellion into its Hellbat form, short-range defense mode."
+1,MORPH_HELLION,"Transforms the Hellbat into its Hellion form, remote support mode."
+1,MORPH_LIBERATORAAMODE,"Reverts to Fighter Mode. In this mode, Liberators can move, but they can only target air units."
+1,MORPH_LIBERATORAGMODE,"Deploys into Defender Mode. In this mode, Liberators inflict single target damage to ground units. Liberators in this mode cannot move."
+0,MORPH_SUPPLYDEPOT_LOWER,
+0,MORPH_SUPPLYDEPOT_RAISE,
+1,MORPH_THOREXPLOSIVEMODE,"Arms the Thor's Javelin missile launchers, which deal splash damage to nearby air units and additional damage to Light units."
+1,MORPH_THORHIGHIMPACTMODE,"Activates the Thor's 250mm Punisher Cannons, which strike a single air target for heavy damage."
+1,MORPH_VIKINGASSAULTMODE,Transforms the Viking into Assault Mode where it becomes a Ground unit with a ground attack.
+1,MORPH_VIKINGFIGHTERMODE,Transforms the Viking into Fighter Mode where it becomes an Air unit with an anti-air attack.
+1,MOVE,Move to target position.
+1,RESEARCH_SMARTSERVOS,"Allows Hellions, Hellbats, Vikings, and Thors to transform quickly between combat modes."
+1,RESEARCH_CYCLONELOCKONDAMAGE,Increases Cyclone Lock On damage. Deals 600 damage over 14 seconds to ground and flying targets.
+1,RESEARCH_BANSHEECLOAKINGFIELD,Allows Banshees to use the Cloak ability.
+1,RESEARCH_BANSHEEHYPERFLIGHTROTORS,Increases the movement speed of Banshees from 3.85 to 5.25.
+1,RESEARCH_BATTLECRUISERWEAPONREFIT,Allows Battlecruisers to use the Yamato Cannon ability.
+1,RESEARCH_COMBATSHIELD,Every Marine gains a Combat Shield that gives 10 hitpoints.
+1,RESEARCH_CONCUSSIVESHELLS,Marauders gain the Concussive Shells ability.
+1,RESEARCH_DRILLINGCLAWS,"Allows Widow Mines to burrow, unborrow and activate two times as fast. Additionally this grants invisibility while reloading."
+1,RESEARCH_HISECAUTOTRACKING,"Adds +1 attack range to Auto-Turrets, Missile Turrets, and Planetary Fortresses."
+1,RESEARCH_INFERNALPREIGNITER,Improves the Hellion's bonus against Light units by +5 damage and the Hellbat's bonus against Light units by +12 damage.
+1,RESEARCH_PERSONALCLOAKING,Enables Ghosts to use the Cloak ability. Cloak renders a unit invisible to enemies unless it's revealed by detectors or effects.
+1,RESEARCH_RAVENCORVIDREACTOR,Increases the Raven's starting energy by 25.
+1,RESEARCH_TERRANSTRUCTUREARMORUPGRADE,"Increases the armor of the Point Defense Drone, Auto-Turret, Missile Turret, Planetary Fortress, and all other Terran structures by 2."
+1,SIEGEMODE_SIEGEMODE,"Transforms a Siege Tank into Siege Mode, increasing its attack range and damage but preventing movement."
+1,STARPORTTECHLABRESEARCH_RESEARCHDURABLEMATERIALS,"Increases the duration of Auto-Turrets and Point Defense Drones from 180 to 240 seconds, and increases the duration of the Seeker Missile from 15 to 20 Seconds."
+1,STARPORTTECHLABRESEARCH_RESEARCHMEDIVACENERGYUPGRADE,Double the energy regeneration rate of Medivac.
+1,STARPORTTRAIN_BANSHEE,"Train a Banshee, a cloaked air unit that excels at surprise attacks against ground targets."
+1,STARPORTTRAIN_BATTLECRUISER,"Train a Battle Cruiser, a powerful capital ship that can teleport across the map and unleash a devastating single-target blast."
+1,STARPORTTRAIN_LIBERATOR,"Train a Liberator, an air unit that transforms into a stationary platform to lockdown and destroy ground targets in a designated area."
+1,STARPORTTRAIN_MEDIVAC,"Train a Medivac, a flying support unit that heals biological forces and transports them across the battlefield."
+1,STARPORTTRAIN_RAVEN,"Train a Raven, a flying spellcaster that disrupts enemy armies with debilitating abilities and provides detection."
+1,STARPORTTRAIN_VIKINGFIGHTER,"Train a Viking Fighter, a transforming fighter that dominates the skies in air mode and provides ground support in assault mode."
+0,SUPPLYDROP_SUPPLYDROP,
+1,TERRANBUILD_ARMORY,"Build a Armory to unlock the Hellbat, Thor and higher-level infantry upgrades."
+1,TERRANBUILD_BARRACKS,"Build a Barracks to produce infantry units (Marine, Reaper, Marauder, Ghost)."
+1,TERRANBUILD_BUNKER,"Build a Bunker, a static defense building."
+1,TERRANBUILD_COMMANDCENTER,"Build a Command Center, the Terran base."
+0,TERRANBUILD_ENGINEERINGBAY,"Build an Engineer Bay to unlock Missile Turret, Sensor Tower and Planetary Fortress."
+1,TERRANBUILD_FACTORY,"Build a Factory to produce mechanical ground units (Hellion, Widow Mine, Siege Tank, Hellbat, Thor) and unlock the Starport and Armory."
+1,TERRANBUILD_FUSIONCORE,"Build a Fusion Core to unlock Battlecruiser."
+1,TERRANBUILD_GHOSTACADEMY,"Build a Ghost Academy to unlock the Ghost unit."
+1,TERRANBUILD_MISSILETURRET,"Build a Missile Turret to attack flying units."
+1,TERRANBUILD_REFINERY,"Build a Refinery on a Vespene Geyser."
+1,TERRANBUILD_SENSORTOWER,"Build a Sensor Tower, which senses any approaching uncloaked, unburrowed enemy units."
+1,TERRANBUILD_STARPORT,"Build a Starport to produce air units (Viking, Medivac, Banshee, Raven, Battlecruiser)."
+1,TERRANBUILD_SUPPLYDEPOT,"Build a Supply Depot to increase 8 supplies and unlock Barracks."
+1,TRAIN_CYCLONE,"Train a Cyclone, locking onto a single air or ground target to deal immense damage while moving to stay at range."
+1,TRAIN_HELLBAT,"Train a Hellbat, a tough, short-ranged walker that incinerates masses of light units with its wide flame attack."
+1,UNSIEGE_UNSIEGE,Converts a Siege Tank back from Siege Mode to its regular mode.
+1,UPGRADETOORBITAL_ORBITALCOMMAND,"Unlocks MULE (Faster Mineral Income), Extra Supplies (Doubles Supply Depot food), and use Scanner Sweep (Reveal any part of the map)."
+1,UPGRADETOPLANETARYFORTRESS_PLANETARYFORTRESS,Enhance the defense capability of Command Center.
+1,WIDOWMINEATTACK_WIDOWMINEATTACK,Command Widow Mine to attack.
+1,YAMATO_YAMATOGUN,"Blasts a target with a devastating plasma cannon, causing 240 damage."
+1,STARPORTTECHLABRESEARCH_RESEARCHRAVENINTERFERENCEMATRIX,Allows Ravens to use the Interference Matrix ability.
+0,UNLOADALL_BUNKER,Unload all units from a Bunker.
+0,UNLOADALLAT_OVERLORD,
+1,PROTOSSBUILD_ASSIMILATOR,"Build an assimilator, built on a Vespene Geyser that allows Probes to harvest gas."
+1,PROTOSSBUILD_CYBERNETICSCORE,Build a Cybernetics Core.
+1,PROTOSSBUILD_DARKSHRINE,Build a Dark Shrine.
+1,PROTOSSBUILD_FLEETBEACON,Build a Fleet Beacon.
+1,PROTOSSBUILD_FORGE,Build a Forge.
+1,PROTOSSBUILD_GATEWAY,Build a Gateway to training ground units.
+1,PROTOSSBUILD_NEXUS,Build a Nexus.
+1,PROTOSSBUILD_PHOTONCANNON,"Build a Photon Cannon, a static defense structure that detects and attacks both ground and air units."
+1,PROTOSSBUILD_PYLON,"Build a Pylon, providing supply and projects a power field."
+1,PROTOSSBUILD_ROBOTICSBAY,Build a Robotics Bay to unlocks the powerful Colossus and Disruptor units.
+1,PROTOSSBUILD_ROBOTICSFACILITY,Build a Robotics Facility.
+1,PROTOSSBUILD_STARGATE,Build a Protoss Stargate.
+1,PROTOSSBUILD_TEMPLARARCHIVE,Build a Templar Archive.
+1,PROTOSSBUILD_TWILIGHTCOUNCIL,Build a Twilight Council.
+1,BUILD_SHIELDBATTERY,"Build a Shield Battery to restore shields of a single friendly unit or building within 6 range."
+1,NEXUSTRAIN_PROBE,Train a Probe.
+1,EFFECT_CHRONOBOOSTENERGYCOST,Reduce the unit production time or technological research time of the target building.
+1,EFFECT_CHRONOBOOST,Reduce the unit production time or technological research time of the target building.
+1,EFFECT_MASSRECALL,Instantly teleport the unit back to its current location.
+1,EFFECT_MASSRECALL_MOTHERSHIP,Instantly teleport the unit back to its current location.
+1,EFFECT_MASSRECALL_MOTHERSHIPCORE,Instantly teleport the unit back to its current location.
+1,EFFECT_MASSRECALL_NEXUS,Instantly teleport the unit back to its current location.
+1,EFFECT_MASSRECALL_STRATEGICRECALL,Instantly teleport the unit back to its current location.
+1,ENERGYRECHARGE_ENERGYRECHARGE,Restore energy to designated units.
+1,WARPGATETRAIN_ZEALOT,"Train a Zealot, a durable frontline warrior that charges to rapidly close with and attack ground enemies."
+1,WARPGATETRAIN_STALKER,"Train a Stalker, a mobile ranged warrior that can Blink to outmaneuver foes and attack both ground and air targets."
+1,WARPGATETRAIN_HIGHTEMPLAR,"Train a High Templar, a powerful spellcaster that devastates armies with Psionic Storm and neutralizes enemy casters with Feedback."
+1,WARPGATETRAIN_DARKTEMPLAR,"Train a Dark Templar, a permanently cloaked assassin that deals devastating melee damage to any ground unit that cannot detect it."
+1,WARPGATETRAIN_SENTRY,"Train a Sentry, a tactical support caster that manipulates the battlefield with Force Fields and protects allies with a Guardian Shield."
+1,GATEWAYTRAIN_ZEALOT,"Train a Zealot, a durable frontline warrior that charges to rapidly close with and attack ground enemies."
+1,GATEWAYTRAIN_STALKER,"Train a Stalker, a mobile ranged warrior that can Blink to outmaneuver foes and attack both ground and air targets."
+1,GATEWAYTRAIN_HIGHTEMPLAR,"Train a High Templar, a powerful spellcaster that devastates armies with Psionic Storm and neutralizes enemy casters with Feedback."
+1,GATEWAYTRAIN_DARKTEMPLAR,"Train a Dark Templar, a permanently cloaked assassin that deals devastating melee damage to any ground unit that cannot detect it."
+1,GATEWAYTRAIN_SENTRY,"Train a Sentry, a tactical support caster that manipulates the battlefield with Force Fields and protects allies with a Guardian Shield."
+1,STARGATETRAIN_PHOENIX,"Train a Phoenix, a swift anti-air fighter that can lift and disable single ground units."
+1,STARGATETRAIN_CARRIER,"Train a Carrier, a powerful capital ship that launches swarms of robotic Interceptors to overwhelm its targets."
+1,STARGATETRAIN_VOIDRAY,"Train a Void Ray, an assault ship whose beam focuses on a single target to rapidly ramp up its damage, melting armored units and buildings."
+1,STARGATETRAIN_ORACLE,"Train an Oracle, a swift harassment and support craft that can reveal enemy armies, trap units in stasis, and eliminate worker lines."
+1,STARGATETRAIN_TEMPEST,"Train a Tempest, a long-range artillery ship that bombards key targets from extreme distances, specializing in destroying massive air units."
+1,ROBOTICSFACILITYTRAIN_WARPPRISM,"Train a Warpprism, an aerial transport that can deploy into a mobile power field, allowing you to warp in units anywhere on the battlefield."
+1,ROBOTICSFACILITYTRAIN_OBSERVER,"Train an Observer, a permanently cloaked aerial scout that provides crucial vision and detects hidden enemy units."
+1,ROBOTICSFACILITYTRAIN_COLOSSUS,"Train a Colossus, a massive walker whose twin thermal lances incinerate large groups of ground units from a long range."
+1,ROBOTICSFACILITYTRAIN_IMMORTAL,"Train a Immortal, a heavily armored walker that demolishes armored targets and can activate a barrier to survive heavy fire."
+1,FORGERESEARCH_PROTOSSGROUNDWEAPONSLEVEL1,"Increases the attack damage of Zealots, Dragoons, Dark Templars and Archons."
+1,FORGERESEARCH_PROTOSSGROUNDWEAPONSLEVEL2,"Increases the attack damage of Zealots, Dragoons, Dark Templars and Archons."
+1,FORGERESEARCH_PROTOSSGROUNDWEAPONSLEVEL3,"Increases the attack damage of Zealots, Dragoons, Dark Templars and Archons."
+1,FORGERESEARCH_PROTOSSGROUNDARMORLEVEL1,"Increases the armor of all Protoss ground forces."
+1,FORGERESEARCH_PROTOSSGROUNDARMORLEVEL2,"Increases the armor of all Protoss ground forces."
+1,FORGERESEARCH_PROTOSSGROUNDARMORLEVEL3,"Increases the armor of all Protoss ground forces."
+1,FORGERESEARCH_PROTOSSSHIELDSLEVEL1,"Upgrades the armor of shields for all Protoss units and structures."
+1,FORGERESEARCH_PROTOSSSHIELDSLEVEL2,"Upgrades the armor of shields for all Protoss units and structures."
+1,FORGERESEARCH_PROTOSSSHIELDSLEVEL3,"Upgrades the armor of shields for all Protoss units and structures."
+1,SUPERWARPGATETRAIN_ZEALOT,"Train a Zealot, a durable frontline warrior that charges to rapidly close with and attack ground enemies."
+1,SUPERWARPGATETRAIN_STALKER,"Train a Stalker, a mobile ranged warrior that can Blink to outmaneuver foes and attack both ground and air targets."
+1,SUPERWARPGATETRAIN_IMMORTAL,"Train a Immortal, a heavily armored walker that demolishes armored targets and can activate a barrier to survive heavy fire."
+1,SUPERWARPGATETRAIN_HIGHTEMPLAR,"Train a High Templar, a powerful spellcaster that devastates armies with Psionic Storm and neutralizes enemy casters with Feedback."
+1,SUPERWARPGATETRAIN_DARKTEMPLAR,"Train a Dark Templar, a permanently cloaked assassin that deals devastating melee damage to any ground unit that cannot detect it."
+1,SUPERWARPGATETRAIN_SENTRY,"Train a Sentry, a tactical support caster that manipulates the battlefield with Force Fields and protects allies with a Guardian Shield."
+1,SUPERWARPGATETRAIN_CARRIER,"Train a Carrier, a powerful capital ship that launches swarms of robotic Interceptors to overwhelm its targets."
+1,SUPERWARPGATETRAIN_PHOENIX,"Train a Phoenix, a swift anti-air fighter that can lift and disable single ground units."
+1,SUPERWARPGATETRAIN_VOIDRAY,"Train a Void Ray, an assault ship whose beam focuses on a single target to rapidly ramp up its damage, melting armored units and buildings."
+1,SUPERWARPGATETRAIN_ARCHON,"Train an Archon, a powerful psionic warrior that unleashes massive area-of-effect damage against both ground and air units."
+1,SUPERWARPGATETRAIN_WARPINZERATUL,"Train a Warpinzeratul, a permanently cloaked assassin who can blink across the battlefield to execute key targets."
+1,SUPERWARPGATETRAIN_WARPINURUN,"Train a Warpinurun, a heroic Phoenix pilot specializing in destroying enemy air forces with a powerful energy beam."
+1,SUPERWARPGATETRAIN_WARPINMOHANDAR,"Train a Warpinmohandar, a legendary Zealot warrior who charges into battle and can cleave through multiple ground enemies at once."
+1,SUPERWARPGATETRAIN_WARPINSELENDIS,"Train a Warpinselendis, a heroic Carrier commander that launches swarms of powerful interceptors to overwhelm enemies from a safe distance."
+1,SUPERWARPGATETRAIN_WARPINSCOUT,"Train a Warpinscout, a versatile air fighter effective against both air and ground targets."
+1,SUPERWARPGATETRAIN_COLOSSUS,"Train a Colossus, a massive walker that incinerates armies of ground units from long range with its twin thermal lances."
+1,SUPERWARPGATETRAIN_WARPPRISM,"Train a Warpprism, a flying transport that can deploy into a mobile pylon, allowing you to warp in units anywhere on the map."
+1,ZERGBUILD_HATCHERY,"Build a Hatchery, the central Zerg structure."
+1,ZERGBUILD_CREEPTUMOR,"Build a Creep Tumor to spread creep for vision and building."
+1,ZERGBUILD_EXTRACTOR,"Build a Extractor to harvest vespene gas."
+1,ZERGBUILD_SPAWNINGPOOL,"Build a Spawning Pool to unlock Zergling and Queen."
+1,ZERGBUILD_EVOLUTIONCHAMBER,"Build a Evolution Chamber to upgrade ground weapon and armor."
+1,ZERGBUILD_HYDRALISKDEN,"Build a Hydralisk Den to unlock Hydralisk."
+1,ZERGBUILD_SPIRE,"Build a Spire to unlock air units (Mutalisk and Corruptor)."
+1,ZERGBUILD_ULTRALISKCAVERN,"Build a Ultralisk Cavern to unlock Ultralisk."
+1,ZERGBUILD_INFESTATIONPIT,"Build a Infestation Pit to unlock Infestor and Swarm Host."
+1,ZERGBUILD_NYDUSNETWORK,"Build a Nydus Network to create a Nydus Worm at any visible location to enable rapid troop transport."
+1,ZERGBUILD_BANELINGNEST,"Build a Baneling Nest to unlock Baneling."
+1,LARVATRAIN_DRONE,"Train a Drone, a basic worker unit that gathers resources and sacrifices itself to create Zerg structures."
+1,LARVATRAIN_ZERGLING,"Train a Zergling, a cheap and extremely fast melee attacker, ideal for swarming and overwhelming enemies."
+1,LARVATRAIN_OVERLORD,"Train an Overlord to provide supply and act as a scout."
+1,LARVATRAIN_HYDRALISK,"Train a Hydralisk, a versatile ranged attacker effective against both ground and air units."
+1,LARVATRAIN_MUTALISK,"Train a Mutalisk, a very fast flying harasser whose glaive attack bounces between multiple enemy targets."
+1,LARVATRAIN_ULTRALISK,"Train an Ultralisk, a massive, heavily-armored late-game beast that cleaves through ground units with its powerful melee attacks."
+1,LARVATRAIN_ROACH,"Train a Roach, a durable, armored ground attacker that can rapidly regenerate health while burrowed."
+1,LARVATRAIN_INFESTOR,"Train an Infestor, a powerful spellcaster capable of disabling and damaging groups of enemies or temporarily seizing control of a single unit."
+1,LARVATRAIN_CORRUPTOR,"Train a Corruptor, a dedicated anti-air flying unit that deals bonus damage to massive targets and can morph into the powerful Brood Lord."
+1,LARVATRAIN_VIPER,"Train a Viper, a flying spellcaster that manipulates the battlefield by pulling key enemy units out of position or disabling them with clouds."
+1,INFESTEDMONSTERTRAIN_INFESTEDCIVILIAN,"Train an Infested Civilian, an expendable, slow-moving melee attacker that swarms enemies in large numbers."
+1,INFESTEDMONSTERTRAIN_INFESTEDTERRANCAMPAIGN,"Train an Infested Terran (Campaign), an expendable ranged attacker with a timed life, used to overwhelm enemy defenses."
+1,INFESTEDMONSTERTRAIN_INFESTEDABOMINATION,"Train an Infested Abomination, a volatile suicide unit that explodes upon death, dealing massive area damage to units and structures."
+1,ZERGBUILD_ROACHWARREN,"Build a Roach Warren to produce Roach."
+1,ZERGBUILD_SPINECRAWLER,"Build a Spine Crawler, a static defense that impales and damages ground units."
+1,ZERGBUILD_SPORECRAWLER,"Build a Spore Crawler, a static anti-air turret with detection."
+1,RESEARCH_ZERGMELEEWEAPONSLEVEL1,"Increases the attack damage of all Zerg ground/melee units."
+1,RESEARCH_ZERGMELEEWEAPONSLEVEL2,"Increases the attack damage of all Zerg ground/melee units."
+1,RESEARCH_ZERGMELEEWEAPONSLEVEL3,"Increases the attack damage of all Zerg ground/melee units."
+1,RESEARCH_ZERGGROUNDARMORLEVEL1,"Increases the armor of all Zerg ground units."
+1,RESEARCH_ZERGGROUNDARMORLEVEL2,"Increases the armor of all Zerg ground units."
+1,RESEARCH_ZERGGROUNDARMORLEVEL3,"Increases the armor of all Zerg ground units."
+1,RESEARCH_ZERGMISSILEWEAPONSLEVEL1,"Increases the attack damage of all Zerg ground/ranged units."
+1,RESEARCH_ZERGMISSILEWEAPONSLEVEL2,"Increases the attack damage of all Zerg ground/ranged units."
+1,RESEARCH_ZERGMISSILEWEAPONSLEVEL3,"Increases the attack damage of all Zerg ground/ranged units."
+1,RESEARCH_ZERGFLYERATTACKLEVEL1,"Increases the attack damage of all Zerg air units."
+1,RESEARCH_ZERGFLYERATTACKLEVEL2,"Increases the attack damage of all Zerg air units."
+1,RESEARCH_ZERGFLYERATTACKLEVEL3,"Increases the attack damage of all Zerg air units."
+1,RESEARCH_ZERGFLYERARMORLEVEL1,"Increases the armor of all Zerg air units."
+1,RESEARCH_ZERGFLYERARMORLEVEL2,"Increases the armor of all Zerg air units."
+1,RESEARCH_ZERGFLYERARMORLEVEL3,"Increases the armor of all Zerg air units."
+1,RESEARCH_ADAPTIVETALONS,"Reduces the time Lurkers take to burrow from 2 seconds to 1.07 seconds."
+1,RESEARCH_ANABOLICSYNTHESIS,"Increases the movement speed of Ultralisks off creep."
+1,RESEARCH_CENTRIFUGALHOOKS,"Increases Baneling movement speed to 4.13 (+0.63). Banelings will roll instead of running. Requires a Lair."
+1,RESEARCH_GLIALREGENERATION,"Increases Roach movement speed to 4.2 (+1.05) while unburrowed, and to 4.4 while burrowed under creep."
+1,RESEARCH_ZERGLINGMETABOLICBOOST,"Increases Zergling movement speed by 60% to 6.58 (+2.45)."
+1,RESEARCH_PNEUMATIZEDCARAPACE,"Increases the movement speed of Overlords to 3.00 and Overseers to 4.72."
+1,RESEARCH_MUSCULARAUGMENTS,"Increases the movement speed of Hydralisks."
+1,RESEARCH_GROOVEDSPINES,"Increases the attack range of Hydralisks by +1."
+1,RESEARCH_NEURALPARASITE,"Allows Infestors to use the Neural Parasite ability."
+1,RESEARCH_CHITINOUSPLATING,"Increases the armor of all Ultralisks by 2."
+1,TRAIN_ADEPT,"Train an Adept, a ranged warrior that projects a psionic shade to teleport past enemy forces and harass light units."
+1,CYBERNETICSCORERESEARCH_PROTOSSAIRWEAPONSLEVEL1,"Upgrades the damage of Protoss air units."
+1,CYBERNETICSCORERESEARCH_PROTOSSAIRWEAPONSLEVEL2,"Upgrades the damage of Protoss air units."
+1,CYBERNETICSCORERESEARCH_PROTOSSAIRWEAPONSLEVEL3,"Upgrades the damage of Protoss air units."
+1,CYBERNETICSCORERESEARCH_PROTOSSAIRARMORLEVEL1,"Upgrades the armor of Protoss air units."
+1,CYBERNETICSCORERESEARCH_PROTOSSAIRARMORLEVEL2,"Upgrades the armor of Protoss air units."
+1,CYBERNETICSCORERESEARCH_PROTOSSAIRARMORLEVEL3,"Upgrades the armor of Protoss air units."
+1,RESEARCH_WARPGATE,"Allows Gateways to be changed into Warp Gates."
+1,GUARDIANSHIELD_GUARDIANSHIELD,"Create a shield bubble around the Sentry that reduces the damage of all incoming ranged attacks by 2 for 15 seconds."
+1,FORCEFIELD_FORCEFIELD,"Create a Force Field that blocks movement for 11 seconds."
+1,HALLUCINATION_ARCHON,"Create a fake Archon to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_COLOSSUS,"Create a fake Colossus to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_HIGHTEMPLAR,"Create a fake High Templar to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_IMMORTAL,"Create a fake Immortal to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_PHOENIX,"Create a fake Phoenix to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_PROBE,"Create a fake Probe to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_STALKER,"Create a fake Stalker to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_VOIDRAY,"Create a fake Void Ray to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_WARPPRISM,"Create a fake Warp Prism to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_ZEALOT,"Create a fake Zealot to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_ORACLE,"Create a fake Oracle to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_DISRUPTOR,"Create a fake Disruptor to serve as a durable scout or to draw enemy fire."
+1,HALLUCINATION_ADEPT,"Create a fake Adept to serve as a durable scout or to draw enemy fire."
+1,ADEPTPHASESHIFT_ADEPTPHASESHIFT,"Activate the Adept's Phase Shift ability, allowing it to teleport to its psionic shade after a short delay, bypassing obstacles and enemy units."
+1,TRAINWARP_ADEPT,"Train an Adept, a ranged warrior that projects a psionic shade to teleport past enemy forces and harass light units."
+1,MORPH_WARPGATE,"Transforms the Gateway into a Warp Gate."
+1,MORPH_GATEWAY,"The Warpgate transforms back into a Gateway."
+1,RESEARCH_ADEPTRESONATINGGLAIVES,"Increases the attack speed of the Adept by 45%."
+1,RESEARCH_BURROW,"Enables all Zerg ground units to use the Burrow ability. Burrow allows a unit to take cover underground, rendering it unable to attack."
+1,TRAINQUEEN_QUEEN,"Train a Queen, a vital defensive unit that injects larva into Hatchery to mass-produce army."
+1,UPGRADETOLAIR_LAIR,"Upgrade to be a Lair to unlock more units and upgrades."
+1,MORPHTORAVAGER_RAVAGER,"Morphs the Roach into a Ravager to be better at remote AOE attacks."
+1,SPINECRAWLERUPROOT_SPINECRAWLERUPROOT,"Gain mobility and lose attack capability."
+1,SPORECRAWLERUPROOT_SPORECRAWLERUPROOT,"Gain mobility and lose attack capability."
+1,SPINECRAWLERROOT_SPINECRAWLERROOT,"Gain attack and lose mobility capability."
+1,SPORECRAWLERROOT_SPORECRAWLERROOT,"Gain attack and lose mobility capability."
+1,MORPH_OVERSEER,"Morph to Overseer to detect invisible units but lose 8 supply."
+1,MORPH_OVERSEERMODE,"Morph to Overseer to detect invisible units but lose 8 supply."
+1,BEHAVIOR_GENERATECREEPON,"Start to generate Creep."
+0,BEHAVIOR_GENERATECREEPOFF,"Stop generating Creep."
+1,MORPH_OVERLORDTRANSPORT,"Upgrade to gain transport ability."
+1,RESEARCH_TUNNELINGCLAWS,"Gives Roaches the ability to move while burrowed at a speed of 2.8."
+1,RESEARCH_GLIALREGENERATION,"Increases Roach movement speed to 4.2 (+1.05) while unburrowed, and to 4.4 while burrowed under creep."
+1,BUILD_LURKERDEN,"Morph to be a Lurker Den to enhance defense ability."
+1,RESEARCH_ADAPTIVETALONS,"Reduces the time Lurkers take to burrow from 2 seconds to 1.07 seconds."
+1,MORPH_SURVEILLANCEMODE,"Transforms the Observer to Surveillance Mode. The Observer gains 25% wider vision, but loses the ability to move."
+1,MORPH_OBSERVERMODE,"Transforms the Observer to standard Observer Mode. Allows the Observer to move at the cost of decreased sight radius."
+0,ATTACK_REDIRECT,
+1,SPAWNCHANGELING_SPAWNCHANGELING,"Spawn a Changeling, a small unit with timed life and no attack. When a Changeling first encounters an enemy unit, it will match that unit's color and change into a Zealot, Marine, or Zergling, depending on the enemy race."
+1,CONTAMINATE_CONTAMINATE,"The Overseer covers an enemy structure in slime. The structure will be unable to train units or research upgrades for 21 seconds."
+1,MORPH_OVERSIGHTMODE,"Grants the Overseer 25% wider vision, but removes its ability to move."
+1,RESEARCH_PNEUMATIZEDCARAPACE,"Increases the movement speed of Overlords to 3.00 and Overseers to 4.72."
+1,EFFECT_CORROSIVEBILE,"Launch a missile at the target location, dealing 60 damage to all units and destroying all Force Fields in the area upon impact."
+1,LOAD_OVERLORD,"The Overlord has a cargo space of 8."
+1,RESEARCH_CHARGE,"Grants the Charge ability. Also increases the movement speed of Zealots to 4.725."
+1,RESEARCH_BLINK,"Gives Stalkers the ability to teleport to a nearby target location."
+1,RESEARCH_ADEPTRESONATINGGLAIVES,"Increases the attack speed of the Adept by 45%."
+1,EFFECT_RESTORE,"Recharges the shield of a close-by friendly Protoss unit for 119.1 shield per second."
+1,SHIELDBATTERYRECHARGEEX5_SHIELDBATTERYRECHARGE,"Recharges the shield of a close-by friendly Protoss unit for 119.1 shield per second."
+1,MORPHZERGLINGTOBANELING_BANELING,"Sacrifice a Zergling to create a suicidal unit that deals splash damage."
