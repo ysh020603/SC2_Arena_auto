@@ -4,6 +4,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
 from sc2.ids.buff_id import BuffId
 from sc2.ids.ability_id import AbilityId
+from sc2.position import Point2
 
 import random
 
@@ -35,12 +36,25 @@ class LLMPlayer(BasePlayer):
         self.scv_auto_attack_distance = 4
         self.scv_auto_attack_time = 240
 
+        # 用于自动防御 记录敌我 任务指派关系
+        self.active_defense_map = {}
+        
+        # 侦察逻辑变量
+        self.active_scout_unit_tag = None  # 当前正在执行侦察任务的单位的tag
+        self.scouting_information = {}      # 存储侦察信息的字典 {time: [info_string, ...]}
+        self.scouted_locations = set()      # 已经侦察过的目标地点 (Point2)
+        self.scv_scout_sent = False         # 确保只在游戏初期派遣一次 SCV
+        self.scout_target_location = None   # 当前侦察兵的目标地点
+        self.known_enemy_tags_in_vision = set() # 追踪当前在视野中的敌人, 以便检测新敌人
+
     async def distribute_workers(self, resource_ratio: float = 2.0) -> None:
         """
         根据全局矿气比分配工人，优先将工人派往采集gas。
         会将gas_site附近采集mineral的worker调往gas_site以最大化其利用。
         """
-        if not self.townhalls.ready or not self.workers:
+        active_workers = self.workers.filter(lambda w: w.tag != self.active_scout_unit_tag)
+
+        if not self.townhalls.ready or not active_workers: # <-- 2. [修改] 检查新列表
             return
 
         # 1. 收集所有基地周围的矿点和气矿
@@ -58,10 +72,12 @@ class LLMPlayer(BasePlayer):
         if self.config.own_race == "Terran":
             await self._deploy_mules(mineral_patches)
 
+
+
         # 3. 处理gas_site超员问题，将多余的worker释放出来加入可用工人池
-        available_idle_workers = list(self.workers.idle)
+        available_idle_workers = list(active_workers.idle)
         
-        for gas_site in gas_refineries:
+        for worker in active_workers.gathering:
             if gas_site.surplus_harvesters > 0:
                 # 找到正在采集这个gas_site的工人
                 gas_workers = []
@@ -753,12 +769,259 @@ class LLMPlayer(BasePlayer):
             print(f"Automatic Defense: Assigned {new_assignments} new units to defend.")
             await self.chat_send(f"Automatic Defense: Engaging base threat!")
 
+    async def set_terran_combat_rally_points(self):
+        """
+        为每个人族攻击单位生产建筑（兵营、工厂、星港）设置集结点。
+        
+        集结点基于最近的指挥中心（或其升级形态），
+        设置在该指挥中心与地图中心连线上，距离指挥中心15个单位的位置。
+        """
+        
+        # 1. 定义人族的相关建筑
+        
+        # (A) 生产攻击单位的建筑
+        combat_structures = {
+            UnitTypeId.BARRACKS,
+            UnitTypeId.FACTORY,
+            UnitTypeId.STARPORT,
+        }
+
+        # (B) 用来计算集结点的"中心"建筑 (指挥中心及其升级)
+        rally_centers = {
+            UnitTypeId.COMMANDCENTER,
+            UnitTypeId.ORBITALCOMMAND,
+            UnitTypeId.PLANETARYFORTRESS
+        }
+
+        # 2. 找到所有已建成的"集结中心"建筑 (B)
+        all_ready_rally_centers = self.structures(rally_centers).ready
+        
+        if not all_ready_rally_centers:
+            # 如果一个"中心"都没有，则无法设置
+            return
+
+        # 3. 获取地图中心
+        map_center = self.game_info.map_center
+
+        # 4. 预先计算所有"集结中心"的集结点
+        rally_points_by_center_tag = {}
+        for center in all_ready_rally_centers:
+            rally_point = center.position.towards(map_center, 15)
+            rally_points_by_center_tag[center.tag] = rally_point
+
+        # 5. 遍历所有已建成的生产建筑 (A)，并设置集结点
+        for structure in self.structures(combat_structures).ready:
+            
+            # 找到最近的"集结中心" (B)
+            closest_center = all_ready_rally_centers.closest_to(structure.position)
+            
+            # 获取这个"中心"对应的集结点
+            target_rally_point = rally_points_by_center_tag[closest_center.tag]
+            
+            # 优化：检查集结点是否已经设置正确，避免每一步都发送无效指令
+            # structure.rally_targets 是一个列表，对于这些建筑，它通常只有一个目标
+            if (not structure.rally_targets) or (structure.rally_targets[0].point != target_rally_point):
+                
+                # *** (1) 执行设置集结点的动作 ***
+                structure(AbilityId.RALLY_UNITS, target_rally_point)
+                
+                # *** (2) 按照您的要求，发送通知 ***
+                
+                # 准备一条清晰的消息
+                # .rounded 会给出整数坐标，更易读
+                message = (
+                    f"已更新集结点: {structure.type_id.name} [Tag:{structure.tag}] "
+                    f"-> {target_rally_point.rounded} "
+                    f"(基于 {closest_center.type_id.name} [Tag:{closest_center.tag}])"
+                )
+                
+                # 打印到本地控制台 (用于调试)
+                print(message)
+                
+                # 发送到游戏内聊天 (用于在游戏中查看)
+                await self.chat_send(message)
+
+
+    # --- 侦察逻辑 (V2: 主动检查视野) ---
+
+    def _update_scouting_information(self):
+        """
+        [新] 主动检查视野, 记录新发现和丢失视野的单位。
+        此函数不重写 BotAI 事件, 而是由 manage_scouting 调用。
+        """
+        
+        current_visible_tags = {u.tag for u in self.enemy_units}
+        
+        # --- 1. 处理新进入视野的单位 ---
+        new_tags = current_visible_tags - self.known_enemy_tags_in_vision
+        
+        if new_tags:
+            current_time_int = int(self.time)
+            if current_time_int not in self.scouting_information:
+                self.scouting_information[current_time_int] = []
+
+            for tag in new_tags:
+                unit = self.enemy_units.find_by_tag(tag)
+                if unit:
+                    info = f"发现 {unit.type_id.name} (Tag: {unit.tag}) 位于 {unit.position.rounded}"
+                    if unit.is_structure:
+                        info += " (建筑)"
+                    
+                    print(f"[侦察信息] {info}")
+                    
+                    # 添加到我们的信息字典中
+                    self.scouting_information[current_time_int].append(info)
+                    
+                    # 额外记录到日志
+                    self.logging("scout_discovery", info)
+
+        # --- 2. 处理离开视野的单位 (用于调试打印) ---
+        lost_tags = self.known_enemy_tags_in_vision - current_visible_tags
+        
+        for tag in lost_tags:
+            # 从 BotAI 内部访问上一帧的单位地图
+            last_known_unit = (
+                self._enemy_units_previous_map.get(tag) or
+                self._enemy_structures_previous_map.get(tag)
+            )
+            if last_known_unit:
+                print(f"[侦察信息] 丢失 {last_known_unit.type_id.name} 的视野, 最后位置 {last_known_unit.position.rounded}")
+
+        # --- 3. 更新状态 ---
+        self.known_enemy_tags_in_vision = current_visible_tags
+
+
+    async def manage_scouting(self):
+        """
+        管理侦察单位和信息收集。
+        在每个 on_step 周期被 run 方法调用。
+        """
+        
+        # [新] 首先, 更新我们的视野信息
+        self._update_scouting_information()
+        
+        # 1. 检查当前侦察单位的状态
+        if self.active_scout_unit_tag:
+            scout_unit = self.units.find_by_tag(self.active_scout_unit_tag)
+            
+            # 侦察单位死亡或消失
+            if not scout_unit: 
+                print(f"侦察单位 (Tag: {self.active_scout_unit_tag}) 丢失 (判定为死亡).")
+                self.active_scout_unit_tag = None
+                self.scout_target_location = None
+            
+            # 侦察单位变为空闲 (可能已到达目的地, 或被手动拉回, 或卡住)
+            elif scout_unit.is_idle: 
+                print(f"侦察单位 {scout_unit.type_id.name} (Tag: {self.active_scout_unit_tag}) 已变为空闲.")
+                self.active_scout_unit_tag = None
+                self.scout_target_location = None
+            
+            # 否则, 单位还在路上, 什么都不做
+            else:
+                pass 
+
+        # 2. 如果当前没有侦察单位, 尝试派遣一个新的
+        if not self.active_scout_unit_tag:
+            await self._find_and_dispatch_scout()
+
+    async def _find_and_dispatch_scout(self):
+        """
+        按照 飞机 > Marine > SCV 的优先级, 寻找一个空闲单位并派遣它。
+        """
+        target = self._get_scout_target()
+        if not target:
+            # print("没有需要侦察的目标。")
+            return # 没有可侦察的目标
+
+        scout_unit = None
+
+        # 优先级 3: 飞机 (任何空闲的飞行单位)
+        air_types = {UnitTypeId.VIKINGFIGHTER, UnitTypeId.BANSHEE, UnitTypeId.MEDIVAC, UnitTypeId.LIBERATOR, UnitTypeId.RAVEN}
+        idle_aircraft = self.units.filter(lambda u: u.type_id in air_types and u.is_idle)
+        if idle_aircraft.exists:
+            scout_unit = idle_aircraft.random
+            print("派遣 [飞机] 执行侦察任务。")
+
+        # 优先级 2: Marine (如果没有可用的飞机)
+        if not scout_unit:
+            idle_marines = self.units(UnitTypeId.MARINE).idle
+            if idle_marines.exists:
+                scout_unit = idle_marines.random
+                print("派遣 [Marine] 执行侦察任务。")
+
+        # 优先级 1: SCV (仅限开局一次)
+        if not scout_unit and not self.scv_scout_sent and self.time > 15:
+            scv_pool = self.workers.idle  # <-- 1. 优先尝试找空闲的
+            if not scv_pool.exists:
+                # <-- 2. 如果找不到空闲的, 就从矿工里找
+                scv_pool = self.workers.filter(
+                    lambda w: w.is_gathering 
+                    and w.order_target in self.mineral_field.tags
+                )
+            if scv_pool.exists: # <-- 3. 只要池子里有单位 (无论是空闲的还是采矿的)
+                scout_unit = scv_pool.random
+                self.scv_scout_sent = True
+                print("派遣 [SCV] (从工人中抽取)...") # <-- 修改了打印信息
+                
+                # 如果找到了合适的单位, 派遣它
+                if scout_unit:
+                    self._send_scout(scout_unit, target)
+
+    def _get_scout_target(self):
+        """
+        决定下一个侦察目标点。
+        优先级:
+        1. 未侦察过的敌方出生点。
+        2. 未侦察过的矿区 (优先去近的)。
+        3. 已知的敌方基地 (如果所有点都侦察过了)。
+        """
+        
+        # 1. 敌方出生点
+        if self.enemy_start_locations:
+            enemy_start_loc = self.enemy_start_locations[0]
+            if enemy_start_loc not in self.scouted_locations:
+                return enemy_start_loc
+        
+        # 2. 未侦察过的矿区
+        unscouted_expansions = []
+        for exp_loc in self.expansion_locations_list:
+            if exp_loc not in self.scouted_locations:
+                unscouted_expansions.append(exp_loc)
+
+        if unscouted_expansions:
+            # 返回距离我方基地最近的那个未侦察矿区
+            return min(unscouted_expansions, key=lambda loc: loc.distance_to(self.start_location))
+        
+        # 3. 如果所有点都侦察过了, 重置侦察列表, 重新侦察敌方基地
+        if self.enemy_start_locations:
+            print("所有侦察点已完成, 循环重置。")
+            self.scouted_locations.clear() 
+            return self.enemy_start_locations[0]
+
+        # 备用方案 (几乎不会触发)
+        return self.game_info.map_center
+
+    def _send_scout(self, unit, target):
+        """
+        发送侦察单位并更新追踪变量的辅助函数。
+        """
+        unit.move(target)
+        self.active_scout_unit_tag = unit.tag
+        self.scout_target_location = target
+        
+        # 当我们派遣单位时就标记该地点, 防止重复派遣
+        self.scouted_locations.add(target) 
+        
+        print(f"正在派遣 {unit.type_id.name} (Tag: {unit.tag}) 侦察 {target.rounded}")
+        self.logging("scouting", f"Dispatching {unit.type_id.name} to {target.rounded}")
+
 #### shy_end ####
     
     async def run(self, iteration: int):
         # send idle workers to minerals or gas automatically
         await self.distribute_workers()
         await self.automatic_defense()
+        await self.manage_scouting()
         # for unit in self.units:
         #     if unit.type_id in [UnitTypeId.MULE] or unit.is_constructing_scv:
         #         continue

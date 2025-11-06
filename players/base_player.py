@@ -90,9 +90,6 @@ class BasePlayer(BotAI):
         self.resource_cost = 0
 
         self.miner_units = ["SCV", "Probe", "Drone"]
-        
-        # 用于自动防御 记录敌我 任务指派关系
-        self.active_defense_map = {}
 
     def logging(self, key: str, value, level="info", save_trace=False, save_file=False, print_log=True):
         if not self.enable_logging:
