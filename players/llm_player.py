@@ -46,6 +46,8 @@ class LLMPlayer(BasePlayer):
         self.scv_scout_sent = False         # 确保只在游戏初期派遣一次 SCV
         self.scout_target_location = None   # 当前侦察兵的目标地点
         self.known_enemy_tags_in_vision = set() # 追踪当前在视野中的敌人, 以便检测新敌人
+        
+        self.structure_rally_points = {} # 记录每个生产建筑的集结点 {structure_tag: target_point}
 
     async def distribute_workers(self, resource_ratio: float = 2.0) -> None:
         """
@@ -74,25 +76,27 @@ class LLMPlayer(BasePlayer):
 
 
 
-        # 3. 处理gas_site超员问题，将多余的worker释放出来加入可用工人池
+# 3. 处理gas_site超员问题，将多余的worker释放出来加入可用工人池
         available_idle_workers = list(active_workers.idle)
         
-        for worker in active_workers.gathering:
+        # [修改] 遍历所有气矿 (gas_refineries)，而不是所有工人
+        for gas_site in gas_refineries:
             if gas_site.surplus_harvesters > 0:
                 # 找到正在采集这个gas_site的工人
                 gas_workers = []
-                for worker in self.workers.gathering:
+                # [修改] 使用 'w' 作为内部循环变量名, 避免混淆
+                for w in self.workers.gathering: 
                     # 通过距离判断worker是否在采集这个gas_site
-                    if worker.distance_to(gas_site) < 2:
-                        gas_workers.append(worker)
+                    if w.distance_to(gas_site) < 2:
+                        gas_workers.append(w)
                 
                 # 计算需要释放的工人数量
                 excess_count = gas_site.surplus_harvesters
                 
                 # 将多余的工人加入到可用工人池中（取前excess_count个）
                 for i in range(min(excess_count, len(gas_workers))):
-                    worker = gas_workers[i]
-                    available_idle_workers.append(worker)
+                    worker_to_reassign = gas_workers[i] # [修改] 使用新变量名
+                    available_idle_workers.append(worker_to_reassign)
                     print(f"Marked excess worker from gas for reassignment: {gas_site}")
 
         # 4. 统计每个点的缺工数
@@ -770,76 +774,85 @@ class LLMPlayer(BasePlayer):
             await self.chat_send(f"Automatic Defense: Engaging base threat!")
 
     async def set_terran_combat_rally_points(self):
-        """
-        为每个人族攻击单位生产建筑（兵营、工厂、星港）设置集结点。
-        
-        集结点基于最近的指挥中心（或其升级形态），
-        设置在该指挥中心与地图中心连线上，距离指挥中心15个单位的位置。
-        """
-        
-        # 1. 定义人族的相关建筑
-        
-        # (A) 生产攻击单位的建筑
-        combat_structures = {
-            UnitTypeId.BARRACKS,
-            UnitTypeId.FACTORY,
-            UnitTypeId.STARPORT,
-        }
-
-        # (B) 用来计算集结点的"中心"建筑 (指挥中心及其升级)
-        rally_centers = {
-            UnitTypeId.COMMANDCENTER,
-            UnitTypeId.ORBITALCOMMAND,
-            UnitTypeId.PLANETARYFORTRESS
-        }
-
-        # 2. 找到所有已建成的"集结中心"建筑 (B)
-        all_ready_rally_centers = self.structures(rally_centers).ready
-        
-        if not all_ready_rally_centers:
-            # 如果一个"中心"都没有，则无法设置
-            return
-
-        # 3. 获取地图中心
-        map_center = self.game_info.map_center
-
-        # 4. 预先计算所有"集结中心"的集结点
-        rally_points_by_center_tag = {}
-        for center in all_ready_rally_centers:
-            rally_point = center.position.towards(map_center, 15)
-            rally_points_by_center_tag[center.tag] = rally_point
-
-        # 5. 遍历所有已建成的生产建筑 (A)，并设置集结点
-        for structure in self.structures(combat_structures).ready:
+            """
+            为每个人族攻击单位生产建筑（兵营、工厂、星港）设置集结点。
             
-            # 找到最近的"集结中心" (B)
-            closest_center = all_ready_rally_centers.closest_to(structure.position)
+            集结点基于最近的指挥中心（或其升级形态），
+            设置在该指挥中心与地图中心连线上，距离指挥中心15个单位的位置。
+            [V2: 使用 self.structure_rally_points 缓存避免重复设置]
+            """
             
-            # 获取这个"中心"对应的集结点
-            target_rally_point = rally_points_by_center_tag[closest_center.tag]
+            # 1. 定义人族的相关建筑
             
-            # 优化：检查集结点是否已经设置正确，避免每一步都发送无效指令
-            # structure.rally_targets 是一个列表，对于这些建筑，它通常只有一个目标
-            if (not structure.rally_targets) or (structure.rally_targets[0].point != target_rally_point):
+            # (A) 生产攻击单位的建筑
+            combat_structures = {
+                UnitTypeId.BARRACKS,
+                UnitTypeId.FACTORY,
+                UnitTypeId.STARPORT,
+            }
+
+            # (B) 用来计算集结点的"中心"建筑 (指挥中心及其升级)
+            rally_centers = {
+                UnitTypeId.COMMANDCENTER,
+                UnitTypeId.ORBITALCOMMAND,
+                UnitTypeId.PLANETARYFORTRESS
+            }
+
+            # 2. 找到所有已建成的"集结中心"建筑 (B)
+            all_ready_rally_centers = self.structures(rally_centers).ready
+            
+            if not all_ready_rally_centers:
+                # 如果一个"中心"都没有，则无法设置
+                return
+
+            # 3. 获取地图中心
+            map_center = self.game_info.map_center
+
+            # 4. 预先计算所有"集结中心"的集结点
+            rally_points_by_center_tag = {}
+            for center in all_ready_rally_centers:
+                rally_point = center.position.towards(map_center, 15)
+                rally_points_by_center_tag[center.tag] = rally_point
+
+            # 5. [新增] 获取当前所有相关生产建筑
+            ready_combat_structures = self.structures(combat_structures).ready
+            current_combat_tags = {s.tag for s in ready_combat_structures}
+            
+            # 6. [新增] 清理缓存中已不存在(被摧毁)的建筑
+            # (使用 list() 来允许在迭代时修改字典)
+            tags_to_remove = [tag for tag in self.structure_rally_points if tag not in current_combat_tags]
+            for tag in tags_to_remove:
+                del self.structure_rally_points[tag]
+                print(f"Rally cache: Removed destroyed structure [Tag:{tag}]")
+
+            # 7. 遍历所有已建成的生产建筑 (A)，并设置集结点
+            for structure in ready_combat_structures:
                 
-                # *** (1) 执行设置集结点的动作 ***
-                structure(AbilityId.RALLY_UNITS, target_rally_point)
+                # 找到最近的"集结中心" (B)
+                closest_center = all_ready_rally_centers.closest_to(structure.position)
                 
-                # *** (2) 按照您的要求，发送通知 ***
+                # 获取这个"中心"对应的集结点
+                target_rally_point = rally_points_by_center_tag[closest_center.tag]
                 
-                # 准备一条清晰的消息
-                # .rounded 会给出整数坐标，更易读
-                message = (
-                    f"已更新集结点: {structure.type_id.name} [Tag:{structure.tag}] "
-                    f"-> {target_rally_point.rounded} "
-                    f"(基于 {closest_center.type_id.name} [Tag:{closest_center.tag}])"
-                )
-                
-                # 打印到本地控制台 (用于调试)
-                print(message)
-                
-                # 发送到游戏内聊天 (用于在游戏中查看)
-                await self.chat_send(message)
+                # 8. [修改] 检查缓存的集结点是否与目标集结点不同
+                cached_point = self.structure_rally_points.get(structure.tag)
+
+                if cached_point != target_rally_point:
+                    
+                    # *** (1) 执行设置集结点的动作 ***
+                    structure(AbilityId.RALLY_UNITS, target_rally_point)
+                    
+                    # *** (2) [新增] 更新缓存 ***
+                    self.structure_rally_points[structure.tag] = target_rally_point
+                    
+                    # *** (3) 按照您的要求，发送通知 ***
+                    message = (
+                        f"已更新集结点: {structure.type_id.name} [Tag:{structure.tag}] "
+                        f"-> {target_rally_point.rounded} "
+                        f"(基于 {closest_center.type_id.name} [Tag:{closest_center.tag}])"
+                    )
+                    print(message)
+                    await self.chat_send(message)
 
 
     # --- 侦察逻辑 (V2: 主动检查视野) ---
@@ -1020,8 +1033,11 @@ class LLMPlayer(BasePlayer):
     async def run(self, iteration: int):
         # send idle workers to minerals or gas automatically
         await self.distribute_workers()
-        await self.automatic_defense()
-        await self.manage_scouting()
+        if self.config.own_race == "Terran":
+            await self.set_terran_combat_rally_points()
+            await self.automatic_defense()
+            await self.manage_scouting()
+            
         # for unit in self.units:
         #     if unit.type_id in [UnitTypeId.MULE] or unit.is_constructing_scv:
         #         continue
