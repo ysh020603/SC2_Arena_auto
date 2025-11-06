@@ -3,6 +3,7 @@ from agents import PlanAgent, ActionAgent, RagAgent, SingleAgent
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
 from sc2.ids.buff_id import BuffId
+from sc2.ids.ability_id import AbilityId
 
 import random
 
@@ -645,7 +646,7 @@ class LLMPlayer(BasePlayer):
         self.logging("n_structure_types", len(structure_types), save_trace=True)
 
 #### shy ####
-    def get_enemy_units_near_structures(self, distance: float=25.0):  
+    def get_enemy_units_near_structures(self, distance: float=15.0):  
         """  
         筛选出距离任意我方建筑在指定距离内的敌方单位  
         
@@ -663,56 +664,94 @@ class LLMPlayer(BasePlayer):
         # 使用 in_distance_of_group 方法筛选  
         return self.enemy_units.in_distance_of_group(self.structures, distance)
     
-    async def automatic_defense(self, base_defense_radius: float = 25.0, response_radius: float = 40.0):
-            """
-            自动指派空闲的战斗单位去防御基地。
-            会调用 get_enemy_units_near_structures 来查找威胁。
-            """
-            
-            # 1. 使用您提供的函数，查找进入基地防御圈（25.0 范围）的敌人
-            enemies_near_base = self.get_enemy_units_near_structures(base_defense_radius)
-            
-            if not enemies_near_base.exists:
-                # 基地安全，无需执行
-                return
 
-            # 2. 查找我们所有可用于防御的单位
-            # (self.miner_units 在 BasePlayer 中定义, 包含 "SCV", "Probe", "Drone")
-            # 我们排除了所有农民单位和MULE
-            non_combat_types = {"SCV","PROBE","DRONE","MULE"}
-            
-            # 筛选出：可以攻击的(can_attack)、且不是农民或MULE的单位
-            # unit.name 全部大写
-            available_defenders = self.units.filter(
-                lambda unit: unit.can_attack and unit.name.upper() not in non_combat_types
-            )
+    async def automatic_defense(self, base_defense_radius: float = 10.0, response_radius: float = 20.0):
+        """
+        自动指派战斗单位去防御基地。
+        [新] 使用 self.active_defense_map {defender_tag: enemy_tag} 来跟踪防御/威胁对。
+        当一个特定的威胁消失（死亡或离开）时，对应的防御单位会停止追击。
+        """
 
-            if not available_defenders.exists:
-                # 没有空闲的防御单位
-                return
+        # 1. 查找所有可用于防御的单位
+        non_combat_types = {"SCV", "PROBE", "DRONE", "MULE"}
+        available_defenders = self.units.filter(
+            lambda unit: unit.can_attack and unit.name.upper() not in non_combat_types
+        )
 
-            # 3. 找到在敌人附近（响应范围内）的防御单位
-            # 我们以敌人集群的中心点为威胁中心
-            threat_center = enemies_near_base.center
-            
-            # 找出距离威胁中心点 30.0 范围内的所有可用防御单位
-            responding_units = available_defenders.closer_than(response_radius, threat_center)
+        # 2. 查找进入基地防御圈的敌人
+        enemies_near_base = self.get_enemy_units_near_structures(base_defense_radius)
+        # 当前在防御圈内的所有敌人 tag
+        current_threat_tags = enemies_near_base.tags
+        # 视野中所有存活的敌人 tag
+        all_living_enemy_tags = self.enemy_units.tags 
 
-            if not responding_units.exists:
-                # 有空闲单位，但离得太远，不指派
-                return
+        # 3. [Check] 维护和清理 self.active_defense_map
+        # 遍历当前的防御记录，判断是否终止
+        new_defense_map = {} # 用一个新的 map 来存储仍然有效的防御记录
+        stopped_units = 0
 
-            # 4. 指派这些单位去攻击
-            # 遍历所有响应单位
-            for unit in responding_units:
-                # 命令每个单位攻击距离它自己最近的那个威胁
-                target = enemies_near_base.closest_to(unit)
-                if target:
-                    unit.attack(target)
-                    # (可选) 打印日志，确认自动防御已触发
-                    # 向游戏中发送什么单位去进行了防御
-                    await self.chat_send(f"Automatic Defense: Unit {unit.name}")
-                    print(f"Automatic Defense: Unit {unit.tag} dispatched to attack {target.tag}")
+        # 遍历当前记录在案的“我方防御单位”和“其锁定的敌方单位”
+        for defender_tag, enemy_tag in self.active_defense_map.items():
+            defender = self.units.find_by_tag(defender_tag)
+
+            # 检查我方防御单位是否存活
+            if not defender:
+                continue # 防御单位死亡，自动从 new_map 中移除，无需操作
+
+            # 检查敌方单位是否存活
+            enemy_is_alive = enemy_tag in all_living_enemy_tags
+            if not enemy_is_alive:
+                # [判断是否终止] 对应的敌方单位消失（死亡）
+                continue # 敌方单位死亡，防御任务结束，自动移除
+
+            # 检查敌方单位是否仍在威胁区
+            enemy_is_still_a_threat = enemy_tag in current_threat_tags
+
+            if enemy_is_still_a_threat:
+                # 敌人存活且仍在威胁区，保持防御记录
+                new_defense_map[defender_tag] = enemy_tag
+            else:
+                # [判断是否终止] 敌人存活，但已离开威胁区
+                # 停止对应的防御单位
+                if defender.orders and defender.orders[0].ability.id in {AbilityId.ATTACK, AbilityId.ATTACK_ATTACK}:
+                    defender.stop()
+                    stopped_units += 1
+                # 不将此记录添加到 new_map 中，防御结束
+
+        self.active_defense_map = new_defense_map # [删除防御记录] 更新 map，移除了所有已完成的防御
+
+        if stopped_units > 0:
+            print(f"Automatic Defense: Stopped {stopped_units} units from pursuit as their targets left.")
+            await self.chat_send(f"Automatic Defense: {stopped_units} units disengaging.")
+
+        # 4. [指派新的防御]
+        if not enemies_near_base.exists:
+            return # 基地安全，也无需指派新单位
+
+        threat_center = enemies_near_base.center
+        # 找出在响应范围内的所有可用单位
+        responding_units = available_defenders.closer_than(response_radius, threat_center)
+
+        if not responding_units.exists:
+            return # 没有单位能响应
+
+        # 找出尚未分配任务的单位
+        unassigned_defenders = responding_units.filter(lambda u: u.tag not in self.active_defense_map)
+
+        new_assignments = 0
+        for unit in unassigned_defenders:
+            # 命令每个单位攻击距离它自己最近的那个威胁
+            target = enemies_near_base.closest_to(unit)
+            if target:
+                unit.attack(target)
+                # [记录防御行为]
+                # 将“我方单位”和“它去攻击的敌方单位”绑定
+                self.active_defense_map[unit.tag] = target.tag
+                new_assignments += 1
+
+        if new_assignments > 0:
+            print(f"Automatic Defense: Assigned {new_assignments} new units to defend.")
+            await self.chat_send(f"Automatic Defense: Engaging base threat!")
 
 #### shy_end ####
     

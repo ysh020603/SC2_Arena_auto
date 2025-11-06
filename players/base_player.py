@@ -90,6 +90,9 @@ class BasePlayer(BotAI):
         self.resource_cost = 0
 
         self.miner_units = ["SCV", "Probe", "Drone"]
+        
+        # 用于自动防御 记录敌我 任务指派关系
+        self.active_defense_map = {}
 
     def logging(self, key: str, value, level="info", save_trace=False, save_file=False, print_log=True):
         if not self.enable_logging:
@@ -413,7 +416,7 @@ class BasePlayer(BotAI):
 
         return None
 
-    ################ run actions
+    # ################ run actions
     # async def run_actions(self, actions):
     #     for action in actions:
     #         try:
@@ -461,25 +464,28 @@ class BasePlayer(BotAI):
     #     valid_actions = [json.dumps(action, ensure_ascii=False) for action in valid_actions]
     #     self.last_action.extend(valid_actions)
 
-    ################ run actions shy 屏蔽 all attack command
+################ run actions shy 屏蔽 all attack 和 move command
     async def run_actions(self, actions):
         for action in actions:
             # ++++++ 添加的代码：开始 ++++++
             # 检查 action 字典中是否存在 'action' 键，并获取其值
             action_name = action.get("action", "")
+            # [修改] 提前将 action_name 转为大写，方便检查
+            action_name_upper = action_name.upper()
             
-            # 检查指令名称是否包含 "ATTACK" (不区分大小写)
-            # 这将捕获 "ATTACK_ATTACK", "ATTACK" 等指令
-            if "ATTACK" in action_name.upper():
+            # [修改] 检查指令名称是否包含 "ATTACK" 或 "MOVE" (不区分大小写)
+            # 这将捕获 "ATTACK_ATTACK", "MOVE_MOVE", "ATTACK", "MOVE" 等指令
+            if "ATTACK" in action_name_upper or "MOVE" in action_name_upper:
                 try:
                     # 记录被屏蔽的指令
-                    self.logging("blocked_action", f"Blocked attack command: {action_name}", save_trace=True, print_log=True)
+                    self.logging("blocked_action", f"Blocked command: {action_name}", save_trace=True, print_log=True)
                     # （可选）向游戏内聊天发送消息
-                    await self.chat_send(f"Blocked attack command: {action_name}")
+                    await self.chat_send(f"Blocked command: {action_name}")
                     
                     # 将此动作标记为无效，并说明原因
                     action["is_valid"] = False
-                    action["error"] = "Attack command blocked by filter."
+                    # [修改] 更新错误信息
+                    action["error"] = "Attack/Move command blocked by filter."
                 except Exception as e:
                     # 记录可能发生的错误，但继续执行
                     self.logging("block_filter_error", str(e), level="error", print_log=True)
@@ -532,6 +538,8 @@ class BasePlayer(BotAI):
 
         valid_actions = [json.dumps(action, ensure_ascii=False) for action in valid_actions]
         self.last_action.extend(valid_actions)
+
+    ############### run actions shy 屏蔽 all attack command
 
     ################ obs to text
     async def obs_to_text(self):
