@@ -7,6 +7,8 @@ from sc2.ids.ability_id import AbilityId
 from sc2.position import Point2
 
 import random
+import random
+import math
 
 
 class LLMPlayer(BasePlayer):
@@ -48,6 +50,13 @@ class LLMPlayer(BasePlayer):
         self.known_enemy_tags_in_vision = set() # 追踪当前在视野中的敌人, 以便检测新敌人
         
         self.structure_rally_points = {} # 记录每个生产建筑的集结点 {structure_tag: target_point}
+
+        # 驻防逻辑变量
+        self.GARRISON_PERPENDICULAR_DISTANCE = 15  # 驻防点P3/P4：与基地连线的垂直距离
+        self.GARRISON_EXTENSION_DISTANCE = 10      # 驻防点P2：从主集结点P1向基地延伸的距离
+        self.GARRISON_CHECK_RADIUS = 4            # 驻防点检查半径：判断单位是否“在点上”的范围
+        self.GARRISON_DEFENSE_ZONE_RADIUS = 30    # 驻防防区半径：从此半径内调配空闲单位
+        self.last_garrison_check_time = -1        # 上次执行驻防逻辑的游戏帧数（iteration）
 
     async def distribute_workers(self, resource_ratio: float = 2.0) -> None:
         """
@@ -854,6 +863,166 @@ class LLMPlayer(BasePlayer):
                     print(message)
                     await self.chat_send(message)
 
+    def _clamp_position_to_map_bounds(self, p: Point2) -> Point2:
+            """ 
+            确保坐标点在地图边界内，且 X 和 Y 至少为 1。 
+            """
+            map_width = self.game_info.map_size.width
+            map_height = self.game_info.map_size.height
+            
+            # 用户要求：如果计算出 0 或者 负数位置 取 1
+            x = max(1, p.x)
+            y = max(1, p.y)
+            
+            # 额外保护：确保不会超出地图边界 (减1是因为坐标从0开始)
+            x = min(x, map_width - 1)
+            y = min(y, map_height - 1)
+            
+            return Point2((x, y))
+
+    async def manage_garrison(self):
+            """
+            管理基地的自动驻防。
+            为每个基地计算4个驻防点，并按比例分配防区内的空闲战斗单位。
+            [修改] 只有在基地 10.0 半径内没有敌情时才会执行。
+            """
+            
+            # 1. [修改] 检查是否有敌情 (使用 automatic_defense 的 10.0 半径)
+            # 任何建筑附近 10.0 范围内有敌人，则跳过驻防调整
+            enemies_near_base = self.get_enemy_units_near_structures(10.0) 
+            if enemies_near_base.exists:
+                # print("敌情威胁中，暂停驻防调整。")
+                return # 存在敌情，不调整驻防
+
+            # 2. 获取所有空闲战斗单位
+            non_combat_types = {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE, UnitTypeId.MULE}
+            idle_combat_units = self.units.filter(
+                lambda u: u.can_attack 
+                and u.type_id not in non_combat_types 
+                and u.is_idle
+            )
+            if not idle_combat_units.exists:
+                # print("没有空闲的战斗单位，跳过驻防。")
+                return # 没有单位可分配
+
+            # 3. 遍历每个基地 (center) 来管理其驻防
+            rally_centers_types = {
+                UnitTypeId.COMMANDCENTER,
+                UnitTypeId.ORBITALCOMMAND,
+                UnitTypeId.PLANETARYFORTRESS
+            }
+            all_ready_rally_centers = self.structures(rally_centers_types).ready
+            if not all_ready_rally_centers.exists:
+                return # 没有基地
+            
+            map_center = self.game_info.map_center
+            total_units_moved = 0
+
+            for center in all_ready_rally_centers:
+                
+                # --- A. 计算 4 个驻防点 ---
+                
+                # 逻辑同 set_terran_combat_rally_points
+                main_rally_point = center.position.towards(map_center, 15)
+                
+                # Point 1 (50%): The main rally point
+                p1 = main_rally_point
+                
+                # Point 2 (10%): 在 指挥中心(center) 和 集结点(p1) 连线上，靠近指挥中心
+                p2 = main_rally_point.towards(center.position, self.GARRISON_EXTENSION_DISTANCE)
+                
+                # [修改] Points 3 & 4 (20% each): 在 指挥中心(center) 和 P1(main_rally_point) 连线的中点 做垂线
+                vector = main_rally_point.position - center.position
+
+                # [修复] 替换 .lerp()，手动计算中点 (P1 + P2) / 2
+                mid_point = (center.position + main_rally_point.position) / 2 # 计算中点
+                
+                if not vector.length: # 避免除零
+                    perp_vector = Point2((self.GARRISON_PERPENDICULAR_DISTANCE, 0))
+                else:
+                    # [修复] 替换 .rotated(90)，手动计算垂直向量
+                    # 2D 向量 (x, y) 旋转 90 度为 (-y, x)
+                    norm_vec = vector.normalized
+                    rotated_vec = Point2((-norm_vec.y, norm_vec.x))
+                    perp_vector = rotated_vec * self.GARRISON_PERPENDICULAR_DISTANCE
+                    
+                p3 = mid_point + perp_vector
+                p4 = mid_point - perp_vector
+
+                # [新增] 确保所有驻防点坐标合法（大于0且在地图内）
+                p1 = self._clamp_position_to_map_bounds(p1)
+                p2 = self._clamp_position_to_map_bounds(p2)
+                p3 = self._clamp_position_to_map_bounds(p3)
+                p4 = self._clamp_position_to_map_bounds(p4)
+                
+                # [修改] 按优先级排序：P1, P2, P3, P4
+                garrison_quotas_points = [
+                    (0.50, p1), # P1 (50%)
+                    (0.10, p2), # P2 (10%)
+                    (0.20, p3), # P3 (20%)
+                    (0.20, p4)  # P4 (20%)
+                ]
+
+                # --- B. 分配单位 ---
+                
+                # 1. 获取防区内的所有空闲单位 (只操作本防区的兵力)
+                # [注意] GARRISON_DEFENSE_ZONE_RADIUS (30) 仍然用于定义 *我方* 防区范围
+                units_in_zone = idle_combat_units.closer_than(self.GARRISON_DEFENSE_ZONE_RADIUS, center.position)
+                total_units_in_zone = units_in_zone.amount
+                
+                if total_units_in_zone == 0:
+                    continue # 这个基地防区没兵，跳过
+
+                available_units = list(units_in_zone) # 可供分配的单位
+                units_moved_this_base = 0
+
+                # 2. 按优先级遍历驻防点
+                for quota, point in garrison_quotas_points:
+                    needed_count = math.ceil(total_units_in_zone * quota)
+                    
+                    # 检查有多少单位 *已经* 在这个点
+                    units_at_point = []
+                    remaining_available = []
+                    
+                    for u in available_units:
+                        if u.distance_to(point) <= self.GARRISON_CHECK_RADIUS:
+                            units_at_point.append(u)
+                        else:
+                            remaining_available.append(u)
+                    
+                    num_at_point = len(units_at_point)
+                    num_to_move = max(0, needed_count - num_at_point)
+                    
+                    # a. 将已在位置的单位(最多needed_count个)标记为“已分配”
+                    # (我们只关心更新 available_units 列表)
+                    # final_assigned_at_point = units_at_point[:needed_count]
+                    
+                    # b. 将多余的单位 和 不在位置的单位 放回“可用”池
+                    excess_units = units_at_point[needed_count:]
+                    available_units = remaining_available + excess_units
+                    
+                    # c. 如果还需要单位，从“可用”池中调拨 (如果兵力不够, available_units会变空, 自动满足 P1 > P2 > P3 > P4)
+                    if num_to_move > 0 and available_units:
+                        # 排序，找到最近的
+                        available_units.sort(key=lambda u: u.distance_to(point))
+                        
+                        units_to_move = available_units[:num_to_move]
+                        available_units = available_units[num_to_move:] # 更新“可用”池
+                        
+                        for u in units_to_move:
+                            u.move(point)
+                            units_moved_this_base += 1
+                
+                # 3. 将所有剩余未分配的单位派往主集结点 (P1)
+                for u in available_units:
+                    if u.distance_to(p1) > self.GARRISON_CHECK_RADIUS:
+                        u.move(p1)
+                        units_moved_this_base += 1
+                
+                if units_moved_this_base > 0:
+                    print(f"Garrisoning Base {center.tag}: Reassigned {units_moved_this_base} units.")
+                    total_units_moved += units_moved_this_base
+
 
 # --- 侦察逻辑 (V3: 连续侦察 & 最近目标) ---
 
@@ -1048,6 +1217,26 @@ class LLMPlayer(BasePlayer):
         print(f"正在派遣 {unit.type_id.name} (Tag: {unit.tag}) 侦察 {target.rounded}")
         self.logging("scouting", f"Dispatching {unit.type_id.name} to {target.rounded}")
 
+
+    # --- 攻击逻辑 (V1: 多风格攻击) ---
+
+    def _get_all_combat_units(self):
+        """
+        辅助函数: 获取所有非农民、非MULE的战斗单位
+        """
+        non_combat_types = {"SCV", "PROBE", "DRONE", "MULE"}
+        return self.units.filter(
+            lambda unit: unit.can_attack and unit.name.upper() not in non_combat_types
+        )
+
+    async def manage_attack(self):
+        """
+        【攻击总指挥】
+        根据游戏情况决定并执行一种攻击策略。
+        此函数在 on_step 中被调用, 且在 automatic_defense (自动防御) 之后。
+        """
+        
+
 #### shy_end ####
     
     async def run(self, iteration: int):
@@ -1057,6 +1246,15 @@ class LLMPlayer(BasePlayer):
             await self.set_terran_combat_rally_points()
             await self.automatic_defense()
             await self.manage_scouting()
+            await self.manage_attack()
+
+            # --- [新增] 驻防逻辑 ---
+            # [修改] 每 224 帧（约10秒 @ 22.4 帧/秒）检查一次驻防
+            garrison_check_interval = 224
+            if iteration - self.last_garrison_check_time > garrison_check_interval:
+                await self.manage_garrison()
+                self.last_garrison_check_time = iteration
+            # --- [新增] 驻防逻辑 结束 ---
             
         # for unit in self.units:
         #     if unit.type_id in [UnitTypeId.MULE] or unit.is_constructing_scv:

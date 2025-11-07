@@ -53,7 +53,7 @@ def parse_args():
         "--ai_build",
         choices=constants.ai_build_choices,
         help="AI build",
-        default="Rush",
+        default="RandomBuild",
     )
     # For LLM agent settings
     parser.add_argument(
@@ -178,7 +178,7 @@ import random
 
 # 生成一个随机种子
 # 2**32 - 1 是 4294967295，这是一个常用的种子范围
-random_seed_value = random.randint(0, 2**32 - 1)
+random_seed_value = random.randint(0, 100)
 
 # 将生成的种子放入您的代码中
 res = run_game(
