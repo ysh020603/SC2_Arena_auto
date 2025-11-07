@@ -855,11 +855,12 @@ class LLMPlayer(BasePlayer):
                     await self.chat_send(message)
 
 
-    # --- 侦察逻辑 (V2: 主动检查视野) ---
+# --- 侦察逻辑 (V3: 连续侦察 & 最近目标) ---
 
     def _update_scouting_information(self):
         """
-        [新] 主动检查视野, 记录新发现和丢失视野的单位。
+        [V3] 主动检查视野, 记录新发现的单位。
+        (根据用户需求, 移除了 "丢失视野" 的打印)
         此函数不重写 BotAI 事件, 而是由 manage_scouting 调用。
         """
         
@@ -880,6 +881,7 @@ class LLMPlayer(BasePlayer):
                     if unit.is_structure:
                         info += " (建筑)"
                     
+                    # [V3] 侦察报告只打印新发现的单位
                     print(f"[侦察信息] {info}")
                     
                     # 添加到我们的信息字典中
@@ -888,17 +890,17 @@ class LLMPlayer(BasePlayer):
                     # 额外记录到日志
                     self.logging("scout_discovery", info)
 
-        # --- 2. 处理离开视野的单位 (用于调试打印) ---
-        lost_tags = self.known_enemy_tags_in_vision - current_visible_tags
-        
-        for tag in lost_tags:
-            # 从 BotAI 内部访问上一帧的单位地图
-            last_known_unit = (
-                self._enemy_units_previous_map.get(tag) or
-                self._enemy_structures_previous_map.get(tag)
-            )
-            if last_known_unit:
-                print(f"[侦察信息] 丢失 {last_known_unit.type_id.name} 的视野, 最后位置 {last_known_unit.position.rounded}")
+        # --- 2. 处理离开视野的单位 (V3: 根据用户要求, 不再打印 "丢失视野") ---
+        # lost_tags = self.known_enemy_tags_in_vision - current_visible_tags
+        # 
+        # for tag in lost_tags:
+        #     # 从 BotAI 内部访问上一帧的单位地图
+        #     last_known_unit = (
+        #         self._enemy_units_previous_map.get(tag) or
+        #         self._enemy_structures_previous_map.get(tag)
+        #     )
+        #     if last_known_unit:
+        #         print(f"[侦察信息] 丢失 {last_known_unit.type_id.name} 的视野, 最后位置 {last_known_unit.position.rounded}")
 
         # --- 3. 更新状态 ---
         self.known_enemy_tags_in_vision = current_visible_tags
@@ -910,7 +912,7 @@ class LLMPlayer(BasePlayer):
         在每个 on_step 周期被 run 方法调用。
         """
         
-        # [新] 首先, 更新我们的视野信息
+        # [V3] 首先, 更新我们的视野信息
         self._update_scouting_information()
         
         # 1. 检查当前侦察单位的状态
@@ -923,11 +925,21 @@ class LLMPlayer(BasePlayer):
                 self.active_scout_unit_tag = None
                 self.scout_target_location = None
             
-            # 侦察单位变为空闲 (可能已到达目的地, 或被手动拉回, 或卡住)
+            # [V3 修改] 侦察单位变为空闲 (已到达目的地), 立即派遣到下一个最近的地点
             elif scout_unit.is_idle: 
-                print(f"侦察单位 {scout_unit.type_id.name} (Tag: {self.active_scout_unit_tag}) 已变为空闲.")
-                self.active_scout_unit_tag = None
-                self.scout_target_location = None
+                print(f"侦察单位 {scout_unit.type_id.name} (Tag: {self.active_scout_unit_tag}) 已变为空闲, 寻找下一个目标...")
+                
+                # [V3 新] 寻找离侦察兵 *当前位置* 最近的下一个目标
+                next_target = self._get_scout_target(from_position=scout_unit.position)
+                
+                if next_target:
+                    # [V3 新] 派遣到新目标
+                    self._send_scout(scout_unit, next_target)
+                else:
+                    # [V3 新] 找不到目标, 释放侦察兵
+                    print(f"侦察单位 {scout_unit.type_id.name} (Tag: {self.active_scout_unit_tag}) 已完成所有任务, 释放。")
+                    self.active_scout_unit_tag = None
+                    self.scout_target_location = None
             
             # 否则, 单位还在路上, 什么都不做
             else:
@@ -941,7 +953,9 @@ class LLMPlayer(BasePlayer):
         """
         按照 飞机 > Marine > SCV 的优先级, 寻找一个空闲单位并派遣它。
         """
-        target = self._get_scout_target()
+        
+        # [V3 修改] 默认从基地出发寻找第一个目标
+        target = self._get_scout_target(from_position=self.start_location)
         if not target:
             # print("没有需要侦察的目标。")
             return # 没有可侦察的目标
@@ -974,20 +988,26 @@ class LLMPlayer(BasePlayer):
             if scv_pool.exists: # <-- 3. 只要池子里有单位 (无论是空闲的还是采矿的)
                 scout_unit = scv_pool.random
                 self.scv_scout_sent = True
-                print("派遣 [SCV] (从工人中抽取)...") # <-- 修改了打印信息
-                
-                # 如果找到了合适的单位, 派遣它
-                if scout_unit:
-                    self._send_scout(scout_unit, target)
+                print("派遣 [SCV] (从工人中抽取)...")
+        
+        # [V3 修正] 
+        # 统一下发派遣命令 (原代码中此缩进错误, 导致飞机和Marine无法被派遣)
+        if scout_unit:
+            self._send_scout(scout_unit, target)
 
-    def _get_scout_target(self):
+    def _get_scout_target(self, from_position=None):
         """
         决定下一个侦察目标点。
+        [V3 修改] 增加 from_position 参数, 用于计算最近距离。
+        
         优先级:
         1. 未侦察过的敌方出生点。
         2. 未侦察过的矿区 (优先去近的)。
         3. 已知的敌方基地 (如果所有点都侦察过了)。
         """
+        
+        # [V3 新] 确定距离计算的基准点
+        base_position = from_position if from_position else self.start_location
         
         # 1. 敌方出生点
         if self.enemy_start_locations:
@@ -1002,8 +1022,8 @@ class LLMPlayer(BasePlayer):
                 unscouted_expansions.append(exp_loc)
 
         if unscouted_expansions:
-            # 返回距离我方基地最近的那个未侦察矿区
-            return min(unscouted_expansions, key=lambda loc: loc.distance_to(self.start_location))
+            # [V3 修改] 返回距离 (base_position) 最近的那个未侦察矿区
+            return min(unscouted_expansions, key=lambda loc: loc.distance_to(base_position))
         
         # 3. 如果所有点都侦察过了, 重置侦察列表, 重新侦察敌方基地
         if self.enemy_start_locations:

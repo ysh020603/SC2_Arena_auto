@@ -174,11 +174,20 @@ host_player = Bot(getattr(Race, args.own_race), ai_player)
 with open(ai_player.log_path + "/config.json", "w", encoding="utf-8") as f:
     json.dump(vars(args), f, indent=4)
 
+import random
+
+# 生成一个随机种子
+# 2**32 - 1 是 4294967295，这是一个常用的种子范围
+random_seed_value = random.randint(0, 2**32 - 1)
+
+# 将生成的种子放入您的代码中
 res = run_game(
     maps.get(map_name),
     [host_player, join_player],
     realtime=False,
     rgb_render_config=None,
     save_replay_as=ai_player.log_path + "/replay.SC2Replay",
-    random_seed=42
+    random_seed=random_seed_value
 )
+
+# print(f"本次游戏使用的随机种子是: {random_seed_value}")
