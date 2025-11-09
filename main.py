@@ -31,7 +31,7 @@ def parse_args():
         "--difficulty",
         choices=constants.difficulty_choices,
         help="Bot difficulty",
-        default='VeryHard',
+        default="Medium",
         required=False,
     )
     parser.add_argument(
