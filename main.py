@@ -24,14 +24,14 @@ def parse_args():
         "--map_name",
         choices=constants.map_choices,
         help="Map name",
-        default='Flat96',
+        default='Flat48',
         required=False,
     )
     parser.add_argument(
         "--difficulty",
         choices=constants.difficulty_choices,
         help="Bot difficulty",
-        default="Medium",
+        default="Easy",
         required=False,
     )
     parser.add_argument(
@@ -39,7 +39,8 @@ def parse_args():
         type=str, 
         required=False,
         # default="glm-4.5-flash",
-        default="105_30B",
+        # default="105_30B",
+        default="163_30B",
         # default='Qwen2.5-72B-Instruct',
         # default='Qwen2.5-7B-Instruct/checkpoint-7000/',
         # default='deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
@@ -75,7 +76,8 @@ def parse_args():
         type=str,
         # default=os.getenv("BASE_URL", ""),
         # default="https://open.bigmodel.cn/api/paas/v4/",
-        default="http://172.18.127.105:8000/v1",
+        # default="http://172.18.127.105:8000/v1",
+        default="http://172.18.30.163:8000/v1",
         # default="http://172.18.132.21:30000/v1",
         # default="http://172.18.132.20:8815/v1",
         # default="http://172.18.30.165:8815/v1",

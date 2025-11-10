@@ -65,6 +65,17 @@ class LLMPlayer(BasePlayer):
         # 用于生成唯一总攻ID的计数器
         self.total_attack_wave_id_counter: int = 0
 
+        # 定义敌方基地建筑类型
+        self.enemy_townhall_types = {
+            UnitTypeId.COMMANDCENTER,
+            UnitTypeId.ORBITALCOMMAND,
+            UnitTypeId.PLANETARYFORTRESS,
+            UnitTypeId.NEXUS,
+            UnitTypeId.HATCHERY,
+            UnitTypeId.LAIR,
+            UnitTypeId.HIVE,
+        }
+
     async def distribute_workers(self, resource_ratio: float = 2.0) -> None:
         """
         根据全局矿气比分配工人，优先将工人派往采集gas。
