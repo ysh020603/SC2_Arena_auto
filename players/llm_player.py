@@ -1284,8 +1284,9 @@ class LLMPlayer(BasePlayer):
         if units_to_rally.exists:
             
             # 使用 A-Move (攻击性移动)
-            # 这是最高效的批量命令
-            units_to_rally.attack(target_point)
+# 【修复】 必须遍历集合中的每一个单位
+            for unit in units_to_rally:
+                unit.attack(target_point)
             
             # --- 备选方案 ---
             # 如果你只想让它们“移动” (M-Move)，忽略敌人，
