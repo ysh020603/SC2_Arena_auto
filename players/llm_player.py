@@ -1426,7 +1426,8 @@ class LLMPlayer(BasePlayer):
                                 final_target_pos = self.enemy_start_locations[0]
                                 
                         # 统一 A-Move 到最终坐标
-                        live_units_in_group.attack(final_target_pos)
+                        for unit in live_units_in_group:
+                            unit.attack(final_target_pos)
                         # --- 【V3 修复结束】 ---
                     
                     else:
@@ -1454,7 +1455,7 @@ class LLMPlayer(BasePlayer):
 
             # --- 循环外：应用 Kiting (只对 ATTACKING 状态的闲置单位生效) ---
             # 【重要修复】检查 .exists 属性
-            if idle_attackers_in_groups.exists:
+            if idle_attackers_in_groups:
                 self.manage_kiting_attack(idle_attackers_in_groups)
             
     async def manage_attack(self):
