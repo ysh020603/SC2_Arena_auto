@@ -1360,8 +1360,7 @@ class LLMPlayer(BasePlayer):
             waves_to_delete = []
             
             # 用于收集所有“进攻中”的“闲置”单位 (用于Kiting)
-            # 【重要修复】确保这里初始化为空集合
-            idle_attackers_in_groups = self.units.empty
+            idle_attackers_in_groups = []
 
             for wave_id, attack_data in list(self.total_attack_groups.items()):
                 
