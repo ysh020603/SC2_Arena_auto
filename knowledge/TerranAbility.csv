@@ -116,10 +116,10 @@ enabled,ability,description
 0,LAND_ORBITALCOMMAND,
 0,LAND,
 0,SALVAGEEFFECT_SALVAGE,
-1,ATTACK_ATTACK,Attack some unit or structure.
-1,ATTACK_ATTACKTOWARDS,Attack towards target position.
-1,ATTACK_ATTACKBARRAGE,Attack barrage.
-1,MOVE_MOVE,Move to target position.
+0,ATTACK_ATTACK,Attack some unit or structure.
+0,ATTACK_ATTACKTOWARDS,Attack towards target position.
+0,ATTACK_ATTACKBARRAGE,Attack barrage.
+0,MOVE_MOVE,Move to target position.
 0,PATROL_PATROL,Command unit to patrol from current position to target position.
 1,ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL1,"Increase the armor of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
 1,ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL2,"Increase the armor of Terran Air units (Viking, Liberator, Banshee, and Battlecruiser)."
@@ -234,7 +234,7 @@ enabled,ability,description
 1,MORPH_THORHIGHIMPACTMODE,"Activates the Thor's 250mm Punisher Cannons, which strike a single air target for heavy damage."
 1,MORPH_VIKINGASSAULTMODE,Transforms the Viking into Assault Mode where it becomes a Ground unit with a ground attack.
 1,MORPH_VIKINGFIGHTERMODE,Transforms the Viking into Fighter Mode where it becomes an Air unit with an anti-air attack.
-1,MOVE,Move to target position.
+0,MOVE,Move to target position.
 1,RESEARCH_SMARTSERVOS,"Allows Hellions, Hellbats, Vikings, and Thors to transform quickly between combat modes."
 1,RESEARCH_CYCLONELOCKONDAMAGE,Increases Cyclone Lock On damage. Deals 600 damage over 14 seconds to ground and flying targets.
 1,RESEARCH_BANSHEECLOAKINGFIELD,Allows Banshees to use the Cloak ability.

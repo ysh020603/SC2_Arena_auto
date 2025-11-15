@@ -2,12 +2,19 @@ from agents.base_agent import BaseAgent
 from tools.format import extract_code, json_to_markdown, construct_ordered_list
 import json
 
+# strategy_prompt = """
+# Our final aim: destroy all enemies as soon as possible.
+# Our strategy:
+# - Resource collection: produce workers and gather minerals and gas
+# - Development: build attacking units and structures
+# - Attacking: concentrate forces to search and destroy enemies proactively
+# """.strip()
+
 strategy_prompt = """
 Our final aim: destroy all enemies as soon as possible.
 Our strategy:
 - Resource collection: produce workers and gather minerals and gas
 - Development: build attacking units and structures
-- Attacking: concentrate forces to search and destroy enemies proactively
 """.strip()
 
 def construct_plan_example(race: str):
@@ -18,7 +25,6 @@ Following are some examples:
 - Train 1/2/3/... SCV/Marine/Viking/...
 - Build a supply depot;
 - Upgrade to Orbital Command;
-- Attack visible enemies;
 - ...
 """.strip()
     elif race == "Protoss":
@@ -28,7 +34,6 @@ Following are some examples:
 - Train 1/2/3/... Probe/Stalker/Zealot/...
 - Build a Pylon;
 - Upgrade to Warp Gate;
-- Attack visible enemies;
 - ...
 """.strip()
     elif race == "Zerg":
@@ -38,7 +43,6 @@ Following are some examples:
 - Train 1/2/3/... Drone/Zergling/Hydralisk/...
 - Build a Hatchery;
 - Upgrade to Lair;
-- Attack visible enemies;
 - ...
 """.strip()
     else:

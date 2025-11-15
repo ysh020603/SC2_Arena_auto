@@ -1249,28 +1249,28 @@ class LLMPlayer(BasePlayer):
             lambda unit: unit.can_attack and unit.name.upper() not in non_combat_types
         )
 
-    def manage_kiting_attack(self, units_to_check):
-        """
-        为指定的单位列表（units_to_check）应用主动攻击（Kiting/集火）逻辑。
-        :param units_to_check: 一个单位列表或 sc2.units.Units 集合。
-        """
+    # def manage_kiting_attack(self, units_to_check):
+    #     """
+    #     为指定的单位列表（units_to_check）应用主动攻击（Kiting/集火）逻辑。
+    #     :param units_to_check: 一个单位列表或 sc2.units.Units 集合。
+    #     """
         
-        # 遍历从外部传入的特定单位列表
-        for unit in units_to_check:
+    #     # 遍历从外部传入的特定单位列表
+    #     for unit in units_to_check:
             
-            # 排除 MULE 和正在建造的 SCV
-            if unit.type_id in [UnitTypeId.MULE] or unit.is_constructing_scv:
-                continue
+    #         # 排除 MULE 和正在建造的 SCV
+    #         if unit.type_id in [UnitTypeId.MULE] or unit.is_constructing_scv:
+    #             continue
 
-            # --- 主动攻击逻辑 (Kiting / 优先集火) ---
-            enemies_in_range = self.enemy_units.in_attack_range_of(unit)
+    #         # --- 主动攻击逻辑 (Kiting / 优先集火) ---
+    #         enemies_in_range = self.enemy_units.in_attack_range_of(unit)
             
-            if enemies_in_range.exists:
-                # (假设 self.get_lowest_health_enemy 是你类中的一个辅助函数)
-                target = self.get_lowest_health_enemy(enemies_in_range)
-                if target:
-                    # 命令该单位攻击这个血量最低的目标
-                    unit.attack(target)
+    #         if enemies_in_range.exists:
+    #             # (假设 self.get_lowest_health_enemy 是你类中的一个辅助函数)
+    #             target = self.get_lowest_health_enemy(enemies_in_range)
+    #             if target:
+    #                 # 命令该单位攻击这个血量最低的目标
+    #                 unit.attack(target)
 
     def rally_units_to_point(self, units_to_rally, target_point):
         """
@@ -1286,7 +1286,7 @@ class LLMPlayer(BasePlayer):
         if units_to_rally.exists:
             
             # 使用 A-Move (攻击性移动)
-# 【修复】 必须遍历集合中的每一个单位
+            # 【修复】 必须遍历集合中的每一个单位
             for unit in units_to_rally:
                 unit.attack(target_point)
             
@@ -1341,122 +1341,154 @@ class LLMPlayer(BasePlayer):
         self.logger.info(f"launch_total_attack: 已创建总攻波次 {wave_id}，状态: GATHERING。")
 
     def manage_total_attack_groups(self):
-            """
-            【维护总攻编队】(在 on_step 中每帧调用)
-            
-            (V2: 包含两阶段攻击的状态机)
-            1. (剔除死亡)
-            2. (删除全灭记录)
-            3. (状态机)
-            - if GATHERING: 检查是否已抵达集结点。
-                - (是) 切换到 ATTACKING 状态, A-Move 到最终目标。
-                - (否) 如果有单位“闲置”且“掉队”，重新命令其集结。
-            - if ATTACKING: (原逻辑) 如果有单位闲置，允许 Kiting。
-            """
-            if not self.total_attack_groups:
-                return
-
-            current_alive_unit_tags = {unit.tag for unit in self.units}
-            waves_to_delete = []
-            
-            # 用于收集所有“进攻中”的“闲置”单位 (用于Kiting)
-            idle_attackers_in_groups = []
-
-            for wave_id, attack_data in list(self.total_attack_groups.items()):
+                """
+                【维护总攻编队】(在 on_step 中每帧调用)
                 
-                group_unit_tags = attack_data["unit_tags"]
+                (V4: 严格按优先级索敌)
+                1. (剔除死亡)
+                2. (删除全灭记录)
+                3. (状态机)
+                - if GATHERING: ...
+                - if ATTACKING: (新逻辑) 检查主目标是否存活。
+                    - (是) (部队A-Move中，无需干预)
+                    - (否) 整个小队自动索敌:
+                        - 1. 优先 A-Move 离小队中心最近的【建筑】。
+                        - 2. 如果没有建筑, 再 A-Move 离小队中心最近的【单位】。
+                """
+                if not self.total_attack_groups:
+                    return
+
+                current_alive_unit_tags = {unit.tag for unit in self.units}
+                waves_to_delete = []
                 
-                # --- 1. 剔除死亡单位 ---
-                dead_tags = group_unit_tags - current_alive_unit_tags
-                if dead_tags:
-                    group_unit_tags.difference_update(dead_tags)
+                # (已移除 Kiting 逻辑)
 
-                # --- 2. 检查编队是否全灭 ---
-                if not group_unit_tags:
-                    waves_to_delete.append(wave_id)
-                    self.logger.info(f"manage_total_attack_groups: 总攻波次 {wave_id} 已全灭。")
-                    continue
-
-                # --- 3. 状态机逻辑 ---
-                
-                # 获取这个波次所有“存活”的单位对象
-                live_units_in_group = self.units.filter(lambda u: u.tag in group_unit_tags)
-                if not live_units_in_group.exists:
-                    continue # (安全检查)
-
-                current_state = attack_data["state"]
-
-                # --- 状态: GATHERING (集结中) ---
-                if current_state == "GATHERING":
-                    rally_point = attack_data["rally_point"]
+                for wave_id, attack_data in list(self.total_attack_groups.items()):
                     
-                    # 检查是否有任何单位离集结点“太远” (比如 > 10 的距离)
-                    units_not_at_rally = live_units_in_group.further_than(10.0, rally_point)
+                    group_unit_tags = attack_data["unit_tags"]
                     
-                    if not units_not_at_rally.exists:
-                        # --- (触发) 所有单位都已抵达集结点 ---
-                        self.logger.info(f"总攻波次 {wave_id}: 集结完毕，发动进攻！")
-                        attack_data["state"] = "ATTACKING"
-                        
-                        # --- 【V3 修复：Plan B 逻辑】 ---
-                        
-                        # 1. 优先尝试获取 "final_position" (Point2)
-                        final_target_pos = attack_data.get("final_position")
+                    # --- 1. 剔除死亡单位 ---
+                    dead_tags = group_unit_tags - current_alive_unit_tags
+                    if dead_tags:
+                        group_unit_tags.difference_update(dead_tags)
 
-                        # 2. 如果没有 Point2，再尝试通过 "target_tag" (Unit) 查找
-                        if not final_target_pos:
-                            target_tag = attack_data.get("target_tag")
-                            final_target = None
+                    # --- 2. 检查编队是否全灭 ---
+                    if not group_unit_tags:
+                        waves_to_delete.append(wave_id)
+                        self.logger.info(f"manage_total_attack_groups: 总攻波次 {wave_id} 已全灭。")
+                        continue
+
+                    # --- 3. 状态机逻辑 ---
+                    
+                    # 获取这个波次所有“存活”的单位对象
+                    live_units_in_group = self.units.filter(lambda u: u.tag in group_unit_tags)
+                    if not live_units_in_group.exists:
+                        continue # (安全检查)
+
+                    current_state = attack_data["state"]
+
+                    # --- 状态: GATHERING (集结中) ---
+                    if current_state == "GATHERING":
+                        rally_point = attack_data["rally_point"]
+                        
+                        units_not_at_rally = live_units_in_group.further_than(10.0, rally_point)
+                        
+                        if not units_not_at_rally.exists:
+                            # --- (触发) 所有单位都已抵达集结点 ---
+                            self.logger.info(f"总攻波次 {wave_id}: 集结完毕，发动进攻！")
+                            attack_data["state"] = "ATTACKING"
                             
-                            if target_tag:
-                                # 尝试从"单位"中找
-                                if self.enemy_units.exists:
-                                    final_target = self.enemy_units.find_by_tag(target_tag)
+                            # --- 【V3 修复：Plan B 逻辑】 ---
+                            final_target_pos = attack_data.get("final_position")
+                            if not final_target_pos:
+                                target_tag = attack_data.get("target_tag")
+                                final_target = None
+                                if target_tag:
+                                    if self.enemy_units.exists:
+                                        final_target = self.enemy_units.find_by_tag(target_tag)
+                                    if not final_target and self.enemy_structures.exists:
+                                        final_target = self.enemy_structures.find_by_tag(target_tag)
                                 
-                                # 尝试从"建筑"中找
-                                if not final_target and self.enemy_structures.exists:
-                                    final_target = self.enemy_structures.find_by_tag(target_tag)
+                                if final_target:
+                                    final_target_pos = final_target.position
+                                else:
+                                    self.logger.warning(f"总攻波次 {wave_id}: 目标丢失, A-Move至敌方出生点。")
+                                    final_target_pos = self.enemy_start_locations[0]
+                                    
+                            # 统一 A-Move 到最终坐标
+                            for unit in live_units_in_group:
+                                unit.attack(final_target_pos)
+                            # --- 【V3 修复结束】 ---
+                        
+                        else:
+                            # --- (维持) 仍在集结中 ---
+                            idle_and_lost = live_units_in_group.idle.further_than(10.0, rally_point)
+                            if idle_and_lost.exists:
+                                self.rally_units_to_point(idle_and_lost, rally_point)
+
+                    # --- 状态: ATTACKING (进攻中) ---
+                    elif current_state == "ATTACKING":
+                        
+                        # --- 【!! 自动切换目标 V2 !!】 ---
+                        
+                        target_tag = attack_data.get("target_tag")
+                        target_alive = False
+                        
+                        if target_tag:
+                            # 检查目标是否在可见的敌方单位或建筑中
+                            if self.enemy_units.find_by_tag(target_tag):
+                                target_alive = True
+                            elif self.enemy_structures.find_by_tag(target_tag):
+                                target_alive = True
+                        
+                        # 如果原定目标 (target_tag) 已被消灭 (或不存在)
+                        if not target_alive:
+                            self.logger.info(f"总攻波次 {wave_id}: 原目标 {target_tag} 丢失, 自动寻找新目标。")
                             
-                            if final_target:
-                                final_target_pos = final_target.position
+                            # 1. 确定攻击小队的中心点
+                            squad_center = live_units_in_group.center
+                            
+                            # 2. 寻找最近的敌方目标 (【V4 修改】 优先建筑，然后单位)
+                            new_target = None
+                            
+                            # 【V4】 按照用户要求: 分别判断，优先建筑
+                            if self.enemy_structures.exists:
+                                # 优先：寻找最近的建筑
+                                new_target = self.enemy_structures.closest_to(squad_center)
+                            elif self.enemy_units.exists:
+                                # 其次：寻找最近的单位
+                                new_target = self.enemy_units.closest_to(squad_center)
+                            
+                            # 3. 如果找到了新目标
+                            if new_target:
+                                self.logger.info(f"总攻波次 {wave_id}: 锁定新目标 {new_target.name} (Tag: {new_target.tag})。")
+                                
+                                # A-Move 整个小队到新目标
+                                for unit in live_units_in_group:
+                                    unit.attack(new_target)
+                                
+                                # 4. 更新总攻数据，防止每帧都切换目标
+                                attack_data["target_tag"] = new_target.tag
+                                attack_data["final_position"] = new_target.position
+                            
                             else:
-                                # 3. 如果 Unit 目标也丢失了，使用敌方出生点作为最后备选
-                                self.logger.warning(f"总攻波次 {wave_id}: 目标丢失, A-Move至敌方出生点。")
-                                final_target_pos = self.enemy_start_locations[0]
-                                
-                        # 统一 A-Move 到最终坐标
-                        for unit in live_units_in_group:
-                            unit.attack(final_target_pos)
-                        # --- 【V3 修复结束】 ---
-                    
-                    else:
-                        # --- (维持) 仍在集结中 ---
-                        # 检查是否有“掉队”且“闲置”的单位
-                        idle_and_lost = live_units_in_group.idle.further_than(10.0, rally_point)
-                        if idle_and_lost.exists:
-                            # 重新命令这些掉队单位去集结
-                            # (假设 rally_units_to_point 已修复为使用 .attack() 而不是 for 循环)
-                            self.rally_units_to_point(idle_and_lost, rally_point)
+                                # 5. (备选) 如果视野里什么都看不到了
+                                if live_units_in_group.idle.exists:
+                                    final_target_pos = attack_data.get("final_position", self.enemy_start_locations[0])
+                                    self.logger.info(f"总攻波次 {wave_id}: 目标丢失且无视野, 闲置单位 A-Move至最后已知位置。")
+                                    for unit in live_units_in_group.idle:
+                                        unit.attack(final_target_pos)
+                        
+                        # (已移除 Kiting 逻辑)
+                        pass
 
-                # --- 状态: ATTACKING (进攻中) ---
-                elif current_state == "ATTACKING":
-                    # (这是原有的逻辑)
-                    # 找出这个波次中“闲置”的单位，允许它们 Kiting
-                    idle_units_in_group = live_units_in_group.idle
-                    if idle_units_in_group.exists:
-                        # 【重要修复】确保这是 .extend() 而不是赋值
-                        idle_attackers_in_groups.extend(idle_units_in_group)
 
-            # --- 循环外：执行清理 (删除全灭的编队) ---
-            for wave_id in waves_to_delete:
-                if wave_id in self.total_attack_groups:
-                    del self.total_attack_groups[wave_id]
+                # --- 循环外：执行清理 (删除全灭的编队) ---
+                for wave_id in waves_to_delete:
+                    if wave_id in self.total_attack_groups:
+                        del self.total_attack_groups[wave_id]
 
-            # --- 循环外：应用 Kiting (只对 ATTACKING 状态的闲置单位生效) ---
-            # 【重要修复】检查 .exists 属性
-            if idle_attackers_in_groups:
-                self.manage_kiting_attack(idle_attackers_in_groups)
-            
+                # (已移除 Kiting 逻辑)
     async def manage_attack(self):
         """
         【攻击总指挥】
@@ -1537,7 +1569,6 @@ class LLMPlayer(BasePlayer):
 
         # --- 3. (其他) ... ---
         pass
-        
 
 #### shy_end ####
     
