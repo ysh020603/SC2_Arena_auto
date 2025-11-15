@@ -1,7 +1,7 @@
 from .base_player import BasePlayer
 from sc2.unit import Unit
 from sc2.units import Units
-from agents import PlanAgent, ActionAgent, RagAgent, SingleAgent
+from agents import PlanAgent, ActionAgent, RagAgent, SingleAgent, AdjestAgent
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
 from sc2.ids.buff_id import BuffId
@@ -29,6 +29,9 @@ class LLMPlayer(BasePlayer):
         if config.enable_plan or config.enable_plan_verifier:
             self.plan_agent = PlanAgent(config.own_race, **agent_config)
             self.action_agent = ActionAgent(config.own_race, **agent_config)
+            # [!! 在这里添加 !!]
+            # 默认初始化 AdjestAgent，它将使用相同的 agent_config
+            self.adjest_agent = AdjestAgent(log_dir="./logs/classification_logs", **agent_config)
         else:
             self.agent = SingleAgent(config.own_race, **agent_config)
 
@@ -1633,10 +1636,32 @@ class LLMPlayer(BasePlayer):
                 suggestions = self.get_suggestions()
                 self.logging("suggestions", suggestions, save_trace=True, print_log=False)
 
+                # 1. PlanAgent 运行
                 plans, plan_think, plan_chat_history = self.plan_agent.run(obs_text, verifier=self.plan_verifier, suggestions=suggestions)
                 self.logging("plans", plans, save_trace=True)
                 self.logging("plan_think", plan_think, save_trace=True, print_log=False)
                 self.logging("plan_chat_history", plan_chat_history, save_trace=True, print_log=False)
+
+                # --- [!! 在这里添加修改 !!] ---
+                # 2. AdjestAgent 运行 (默认调起)
+                #    (我们使用 hasattr 检查以确保 adjest_agent 已被初始化)
+                if hasattr(self, 'adjest_agent'): 
+                    try:
+                        # AdjestAgent 接收 plans 列表并进行分类
+                        classified_results = self.adjest_agent.run(plans)
+                        
+                        # (重要) AdjestAgent 内部会保存累积的日志文件。
+                        # 我们在这里 logging [当前轮次] 的结果
+                        self.logging("classified_plan_results", classified_results, save_trace=True, print_log=False)
+                        
+                        # (可选) 额外记录标准攻击指令，以便在主日志中快速查看
+                        self.logging("standard_attack_commands_this_run", classified_results.get("standard_attack_commands", []), save_trace=True, print_log=True)
+                        
+                    except Exception as e:
+                        # 确保即使 adjest_agent 失败，游戏也不会崩溃
+                        print(f"Error running AdjestAgent: {e}")
+                        self.logging("adjest_agent_error", str(e), save_trace=True)
+                # --- [!! 修改结束 !!] ---
 
                 actions, action_think, action_chat_history = self.action_agent.run(obs_text, plans, verifier=self.action_verifier)
                 self.logging("actions", actions, save_trace=True)

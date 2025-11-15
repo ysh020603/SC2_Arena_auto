@@ -41,7 +41,7 @@ def parse_args():
         # default="glm-4.5-flash",
         # default="glm-4-flash",
         # default="105_30B",
-        default="73_7B",
+        default="73_14B",
         # default="162_30B",
         # default='Qwen2.5-72B-Instruct',
         # default='Qwen2.5-7B-Instruct/checkpoint-7000/',
