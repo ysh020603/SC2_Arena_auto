@@ -127,6 +127,12 @@ Command: "Launch OFFENSE with 3 Marauder, 5 Marine, 1 SCV targeting SupplyDepotL
 Your Output:
 {{"unit_count": 9, "target_position": [], "target_unit": "SupplyDepotLowered"}}
 
+**Example 4 (Standard Attack):**
+Command: "Launch OFFENSE with 5 Marauder, 1 Marine, targeting OrbitalCommand"
+Your Output:
+{{"unit_count": 6, "target_position": [], "target_unit": "OrbitalCommand"}}
+
+
 ---
 
 Now, analyze this command:

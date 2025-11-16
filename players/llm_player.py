@@ -31,7 +31,7 @@ class LLMPlayer(BasePlayer):
             self.action_agent = ActionAgent(config.own_race, **agent_config)
             # [!! 在这里添加 !!]
             # 默认初始化 AdjestAgent，它将使用相同的 agent_config
-            self.adjest_agent = AdjestAgent(log_dir="./logs/classification_logs", **agent_config)
+            self.adjest_agent = AdjestAgent(log_dir=self.log_path, **agent_config)
         else:
             self.agent = SingleAgent(config.own_race, **agent_config)
 
@@ -80,6 +80,8 @@ class LLMPlayer(BasePlayer):
             UnitTypeId.LAIR,
             UnitTypeId.HIVE,
         }
+
+        self.flag_test = True
 
     async def distribute_workers(self, resource_ratio: float = 2.0) -> None:
         """
@@ -1492,86 +1494,339 @@ class LLMPlayer(BasePlayer):
                         del self.total_attack_groups[wave_id]
 
                 # (已移除 Kiting 逻辑)
+    # async def manage_attack(self):
+    #     """
+    #     【攻击总指挥】
+    #     根据游戏情况决定并执行一种攻击策略。
+    #     此函数在 on_step 中被调用, 且在 automatic_defense (自动防御) 之后。
+    #     """
+        
+    #     # --- 1. (必须) 持续维护所有已发起的“总攻”编队 ---
+    #     self.manage_total_attack_groups()
+
+
+    #     # --- 2. (触发) 自动总攻决策 (硬编码逻辑) ---
+        
+    #     # (--- 新逻辑：计算“可用”兵力 ---)
+        
+    #     # 2.1 找出所有“已在总攻中”的单位
+    #     busy_unit_tags = set()
+    #     if self.total_attack_groups:
+    #         # 遍历所有进行中的攻击波次
+    #         for attack_data in self.total_attack_groups.values():
+    #             # 将该波次中所有(存活)单位的 tag 添加到 "忙碌" 集合中
+    #             busy_unit_tags.update(attack_data["unit_tags"])
+
+    #     # 2.2 获取所有战斗单位
+    #     all_combat_units = self._get_all_combat_units()
+        
+    #     # 2.3 筛选出“可用”的战斗单位 (不在忙碌集合中的)
+    #     available_combat_units = all_combat_units.filter(
+    #         lambda unit: unit.tag not in busy_unit_tags
+    #     )
+        
+    #     # (--- 新逻辑结束 ---)
+        
+
+    #     # 检查：(已修改) “可用”兵力是否达到 5 个？
+    #     # (原: len(combat_units) > 5)
+    #     if len(available_combat_units) >= 3:
+            
+    #         # 兵力已到，开始寻找目标 (使用可用单位的中心点)
+    #         target_to_attack = None
+    #         units_center = available_combat_units.center
+
+    #         # 优先级 1: 寻找已知的敌方“主基地”
+    #         enemy_townhalls = self.enemy_structures.filter(
+    #             lambda structure: structure.type_id in self.enemy_townhall_types
+    #         )
+            
+    #         if enemy_townhalls.exists:
+    #             target_to_attack = enemy_townhalls.closest_to(units_center)
+            
+    #         # 优先级 2: 如果没找到主基地，寻找任何“其他”敌方建筑
+    #         elif self.enemy_structures.exists:
+    #             target_to_attack = self.enemy_structures.closest_to(units_center)
+            
+    #         # 优先级 3: 如果连建筑都看不到...
+    #         elif self.enemy_start_locations:
+    #             # 备用方案A：如果此时看到了任何“单位”
+    #             if self.enemy_units.exists:
+    #                 target_to_attack = self.enemy_units.closest_to(units_center)
+                
+    #             # 备用方案B：(最终方案) 如果什么都看不到，就 A-Move 到敌人基地
+    #             else:
+    #                 target_position = self.enemy_start_locations[0]
+    #                 # (已修改) 只 rally "可用" 单位
+    #                 self.logger.info(f"自动总攻：可用兵力 {len(available_combat_units)}, 未发现敌人, 发起总攻至敌方出生点 {target_position}")
+    #                 self.launch_total_attack(target_position, available_combat_units)
+    #                 return # return 仍然是必要的，以防 Plan A 在同一帧被触发
+
+    #         # 如果在前两步中找到了目标建筑/单位
+    #         if target_to_attack:
+    #             self.logger.info(f"自动总攻：可用兵力 {len(available_combat_units)}, 达到阈值 (5)。")
+    #             self.logger.info(f"自动总攻：锁定目标 {target_to_attack.name} (Tag: {target_to_attack.tag})。")
+                
+    #             # 【!!! 发起总攻 !!!】
+    #             # (已修改) 传入目标 和 “可用”单位
+    #             self.launch_total_attack(target_to_attack, available_combat_units)
+    #             return
+
+    #     # --- 3. (其他) ... ---
+    #     pass
+
+
     async def manage_attack(self):
         """
         【攻击总指挥】
+        (V2: 仅维护总攻, 触发逻辑移至 execute_llm_attacks)
+        
         根据游戏情况决定并执行一种攻击策略。
         此函数在 on_step 中被调用, 且在 automatic_defense (自动防御) 之后。
         """
         
         # --- 1. (必须) 持续维护所有已发起的“总攻”编队 ---
+        # (此函数每帧运行，以更新现有攻击波次的状态,
+        # 例如，在 GATHERING -> ATTACKING 切换, 或在目标丢失后自动寻找新目标)
         self.manage_total_attack_groups()
 
+        # --- 2. (已移除) ---
+        # (自动触发总攻的硬编码逻辑已被移除)
+        # (现在，攻击的发起由 AdjestAgent 的输出
+        #  并通过 run() -> execute_llm_attacks() 触发)
+        
+    async def _resolve_attack_targets(self, target_pos_data, target_unit_name) -> list:
+            """
+            [新] 解析 AdjestAgent 攻击指令的目标。
+            返回一个 [target_object_1, target_object_2, ...] 列表 (Point2 或 Unit)
+            """
+            final_targets = []
+            
+            # 优先级 1: target_position
+            if target_pos_data:
+                try:
+                    # 检查数据是 [x,y] 还是 [[x1,y1], [x2,y2]]
+                    if isinstance(target_pos_data[0], list):
+                        # 多个位置: [[x1,y1], [x2,y2]]
+                        for pos in target_pos_data:
+                            final_targets.append(Point2((pos[0], pos[1])))
+                    elif len(target_pos_data) == 2 and isinstance(target_pos_data[0], int):
+                        # 单个位置: [x,y]
+                        final_targets.append(Point2((target_pos_data[0], target_pos_data[1])))
+                    else:
+                        self.logger.warning(f"无法解析 target_position 数据: {target_pos_data}")
+                except Exception as e:
+                    self.logger.error(f"解析 target_position 时出错: {e}. 数据: {target_pos_data}")
+                    
+            # 优先级 2: target_unit (if position was empty)
+            elif target_unit_name:
+                # 查找与 target_unit_name "最像" 的敌方单位
+                all_enemies = self.enemy_units | self.enemy_structures
+                if all_enemies.exists:
+                    
+                    target_unit_name_lower = target_unit_name.lower()
+                    best_match_unit = None
+                    
+                    # 1. 尝试精确匹配
+                    for unit in all_enemies:
+                        if unit.name.lower() == target_unit_name_lower:
+                            best_match_unit = unit
+                            break
+                            
+                    # 2. 如果没有精确匹配, 尝试包含匹配
+                    if not best_match_unit:
+                        for unit in all_enemies:
+                            if target_unit_name_lower in unit.name.lower():
+                                best_match_unit = unit
+                                break # 找到第一个包含的就用
+                    
+                    if best_match_unit:
+                        self.logger.info(f"已解析 target_unit '{target_unit_name}' -> 敌方 {best_match_unit.name} (Tag: {best_match_unit.tag})")
+                        final_targets.append(best_match_unit)
+                    else:
+                        self.logger.warning(f"在视野中未找到匹配 '{target_unit_name}' 的敌方单位。")
+                        
+            # --- [!! 修改后的备选方案逻辑 !!] ---
+            # 备选方案: 如果未找到任何目标...
+            if not final_targets:
+                self.logger.warning(f"未解析到目标 '{target_pos_data}'/'{target_unit_name}'。 尝试寻找备选目标...")
+                
+                # 1. [新] 备选方案 A: 寻找最近的敌方基地
+                # (使用 __init__ 中定义的 self.enemy_townhall_types)
+                enemy_townhalls = self.enemy_structures.filter(
+                    lambda structure: structure.type_id in self.enemy_townhall_types
+                )
+                
+                if enemy_townhalls.exists:
+                    # 找到离 *我方出生点* 最近的敌方基地
+                    closest_enemy_townhall = enemy_townhalls.closest_to(self.start_location)
+                    final_targets.append(closest_enemy_townhall)
+                    self.logger.warning(f"备选方案A: 锁定最近的敌方基地 {closest_enemy_townhall.name} (Tag: {closest_enemy_townhall.tag})。")
+                
+                # 2. [原] 备选方案 B: 寻找敌方出生点
+                elif self.enemy_start_locations:
+                    final_targets.append(self.enemy_start_locations[0])
+                    self.logger.warning(f"备选方案B: 未找到敌方基地, 默认攻击敌方出生点。")
+                
+                # 3. 最终失败
+                else:
+                    self.logger.error("无法解析任何目标, 且敌方出生点未知。")
+            # --- [!! 修改结束 !!] ---
 
-        # --- 2. (触发) 自动总攻决策 (硬编码逻辑) ---
+            return final_targets
+
+    async def _launch_strike(self, unit_count: int, target_list: list, available_unit_tags: set):
+            """
+            [新] 启动一次小规模袭击 (Strike)。
+            - available_unit_tags 是一个 set, 此函数将从中 *移除* 已分配的单位。
+            [V2: 按实际兵力平分]
+            """
+            
+            if not available_unit_tags:
+                self.logger.warning("发起袭击失败: 没有可用的单位。")
+                return
+
+            if not target_list:
+                self.logger.warning("发起袭击失败: 目标列表为空。")
+                return
+
+            num_targets = len(target_list)
+
+            # --- 1. 选择兵力 (Selection) ---
+            
+            # 获取用于排序的"锚点"位置 (只使用第一个目标)
+            if isinstance(target_list[0], Unit):
+                anchor_pos = target_list[0].position
+            else:
+                anchor_pos = target_list[0] # It's a Point2
+
+            # 获取所有可用的单位对象
+            available_units = self.units.filter(lambda u: u.tag in available_unit_tags)
+            
+            if not available_units.exists:
+                self.logger.warning("发起袭击失败: available_unit_tags 不为空, 但找不到单位对象。")
+                return
+
+            # 按照距离锚点的远近排序
+            sorted_units = available_units.sorted(lambda u: u.distance_to(anchor_pos))
+            
+            # 选取指定数量的单位
+            # (如果可用单位 < unit_count, units_to_assign 会包含所有可用单位)
+            units_to_assign = sorted_units.take(unit_count, -1)
+            
+            if not units_to_assign.exists:
+                self.logger.warning(f"发起袭击失败: 尝试选择 {unit_count} 个单位, 但没有单位被选中。")
+                return
+
+            self.logger.info(f"发起袭击 (Strike): 分配 {len(units_to_assign)} 个单位 (请求 {unit_count} 个) 到 {num_targets} 个目标。")
+
+            assigned_unit_tags_this_strike = set()
+            
+            # --- 2. [!! 已修改 !!] 兵力计算 (Calculation) ---
+            
+            # [V2] 我们不再使用请求的 'unit_count'
+            # 而是使用我们 *实际* 选中的单位数量 'len(units_to_assign)'
+            actual_unit_count = len(units_to_assign)
+            
+            # (例如: 请求9个, 实际6个; 6 / 3 = 2)
+            units_per_target = math.ceil(actual_unit_count / num_targets)
+            
+            if units_per_target == 0 and actual_unit_count > 0:
+                # (安全检查, 防止 num_targets > actual_unit_count 导致 units_per_target 为 0)
+                units_per_target = 1
+
+
+            # --- 3. 分配任务 (Distribution) ---
+            
+            unit_index = 0
+            units_list = list(units_to_assign) # 转换为列表以便切片
+
+            for target in target_list:
+                # (例如: 每次切片 2 个单位)
+                units_for_this_target = units_list[unit_index : unit_index + units_per_target]
+                
+                if not units_for_this_target:
+                    break # 没有更多单位了 (所有单位已分配完毕)
+
+                target_pos_str = target.position.rounded if isinstance(target, Unit) else target.rounded
+                
+                # 命令单位攻击
+                for unit in units_for_this_target:
+                    unit.attack(target)
+                    assigned_unit_tags_this_strike.add(unit.tag)
+                
+                self.logger.info(f"  - {len(units_for_this_target)} 个单位被派往 {target_pos_str}")
+                unit_index += units_per_target
+
+            # 4. (重要) 从本轮可用池中移除已分配的单位
+            available_unit_tags.difference_update(assigned_unit_tags_this_strike)
+
+    async def execute_llm_attacks(self, llm_attack_commands: list):
+        """
+        [新] 处理来自 AdjestAgent 的所有标准攻击指令。
+        在 run() 方法中被调用。
+        """
+        self.logger.info(f"收到 {len(llm_attack_commands)} 条来自 AdjestAgent 的攻击指令。")
         
-        # (--- 新逻辑：计算“可用”兵力 ---)
-        
-        # 2.1 找出所有“已在总攻中”的单位
+        # 1. 获取本轮所有可用的战斗单位
+        # (即不在任何已发起的 "总攻" 编队中的单位)
         busy_unit_tags = set()
         if self.total_attack_groups:
-            # 遍历所有进行中的攻击波次
             for attack_data in self.total_attack_groups.values():
-                # 将该波次中所有(存活)单位的 tag 添加到 "忙碌" 集合中
                 busy_unit_tags.update(attack_data["unit_tags"])
-
-        # 2.2 获取所有战斗单位
-        all_combat_units = self._get_all_combat_units()
-        
-        # 2.3 筛选出“可用”的战斗单位 (不在忙碌集合中的)
-        available_combat_units = all_combat_units.filter(
+                
+        # _get_all_combat_units() 是您在 llm_player.py 中的辅助函数
+        available_combat_units = self._get_all_combat_units().filter(
             lambda unit: unit.tag not in busy_unit_tags
         )
         
-        # (--- 新逻辑结束 ---)
-        
+        # (重要) 转换为 Tag 集合, 以便高效管理和防止重复分配
+        available_unit_tags = {u.tag for u in available_combat_units} 
 
-        # 检查：(已修改) “可用”兵力是否达到 5 个？
-        # (原: len(combat_units) > 5)
-        if len(available_combat_units) >= 3:
-            
-            # 兵力已到，开始寻找目标 (使用可用单位的中心点)
-            target_to_attack = None
-            units_center = available_combat_units.center
+        for command in llm_attack_commands:
+            # 如果本轮已没有可用单位, 停止处理后续攻击指令
+            if not available_unit_tags:
+                self.logger.warning("已无更多可用单位分配, 剩余的 LLM 攻击指令本轮将不执行。")
+                break 
 
-            # 优先级 1: 寻找已知的敌方“主基地”
-            enemy_townhalls = self.enemy_structures.filter(
-                lambda structure: structure.type_id in self.enemy_townhall_types
-            )
+            unit_count = command.get("unit_count", 0)
+            target_pos_data = command.get("target_position", [])
+            target_unit_name = command.get("target_unit", "")
             
-            if enemy_townhalls.exists:
-                target_to_attack = enemy_townhalls.closest_to(units_center)
+            # --- 2. 解析目标 ---
+            target_list = await self._resolve_attack_targets(target_pos_data, target_unit_name)
             
-            # 优先级 2: 如果没找到主基地，寻找任何“其他”敌方建筑
-            elif self.enemy_structures.exists:
-                target_to_attack = self.enemy_structures.closest_to(units_center)
+            if not target_list:
+                self.logger.warning(f"无法解析攻击指令的目标: {command}")
+                continue # 跳过此指令
             
-            # 优先级 3: 如果连建筑都看不到...
-            elif self.enemy_start_locations:
-                # 备用方案A：如果此时看到了任何“单位”
-                if self.enemy_units.exists:
-                    target_to_attack = self.enemy_units.closest_to(units_center)
+            # --- 3. 区分 "总攻" vs "袭击" ---
+            
+            if unit_count > 25:
+                # --- 3.A. 总攻 (Total Attack) ---
+                # 调集所有剩余的可用兵力
+                units_to_assign_tags = set(available_unit_tags) # 复制集合
+                units_to_assign = self.units.filter(lambda u: u.tag in units_to_assign_tags)
                 
-                # 备用方案B：(最终方案) 如果什么都看不到，就 A-Move 到敌人基地
-                else:
-                    target_position = self.enemy_start_locations[0]
-                    # (已修改) 只 rally "可用" 单位
-                    self.logger.info(f"自动总攻：可用兵力 {len(available_combat_units)}, 未发现敌人, 发起总攻至敌方出生点 {target_position}")
-                    self.launch_total_attack(target_position, available_combat_units)
-                    return # return 仍然是必要的，以防 Plan A 在同一帧被触发
-
-            # 如果在前两步中找到了目标建筑/单位
-            if target_to_attack:
-                self.logger.info(f"自动总攻：可用兵力 {len(available_combat_units)}, 达到阈值 (5)。")
-                self.logger.info(f"自动总攻：锁定目标 {target_to_attack.name} (Tag: {target_to_attack.tag})。")
+                if units_to_assign.exists:
+                    # 总攻只支持一个主目标, 我们使用列表中的第一个
+                    main_target = target_list[0]
+                    target_str = main_target.position.rounded if isinstance(main_target, Unit) else main_target.rounded
+                    
+                    self.logger.info(f"发起总攻 (LLM请求 {unit_count}, 实际调集 {len(units_to_assign)}) -> {target_str}")
+                    
+                    # 使用现有的总攻逻辑
+                    # (launch_total_attack 会创建编队, 由 manage_total_attack_groups 维护)
+                    self.launch_total_attack(main_target, units_to_assign)
+                    
+                    # (重要) 消耗掉所有可用单位, 确保本轮不再分配
+                    available_unit_tags.clear() 
                 
-                # 【!!! 发起总攻 !!!】
-                # (已修改) 传入目标 和 “可用”单位
-                self.launch_total_attack(target_to_attack, available_combat_units)
-                return
-
-        # --- 3. (其他) ... ---
-        pass
+            else:
+                # --- 3.B. 袭击 (Strike) ---
+                # 调集指定数量 (unit_count) 的兵力
+                # (注意: _launch_strike 会修改 available_unit_tags 集合)
+                await self._launch_strike(unit_count, target_list, available_unit_tags)
 
 #### shy_end ####
     
@@ -1632,6 +1887,8 @@ class LLMPlayer(BasePlayer):
             #     self.logging("rag_think", rag_think, save_trace=True, print_log=False)
             #     obs_text += "\n\n# Hint\n" + rag_summary
 
+
+
             if self.config.enable_plan or self.config.enable_plan_verifier:
                 suggestions = self.get_suggestions()
                 self.logging("suggestions", suggestions, save_trace=True, print_log=False)
@@ -1646,32 +1903,68 @@ class LLMPlayer(BasePlayer):
                 # 2. AdjestAgent 运行 (默认调起)
                 #    (我们使用 hasattr 检查以确保 adjest_agent 已被初始化)
                 if hasattr(self, 'adjest_agent'): 
-                    try:
-                        # AdjestAgent 接收 plans 列表并进行分类
-                        classified_results = self.adjest_agent.run(plans)
+
+                    # 1. 获取本轮所有可用的战斗单位
+                    # (即不在任何已发起的 "总攻" 编队中的单位)
+                    busy_unit_tags = set()
+                    if self.total_attack_groups:
+                        for attack_data in self.total_attack_groups.values():
+                            busy_unit_tags.update(attack_data["unit_tags"])
+                            
+                    # _get_all_combat_units() 是您在 llm_player.py 中的辅助函数
+                    available_combat_units = self._get_all_combat_units().filter(
+                        lambda unit: unit.tag not in busy_unit_tags
+                    )
+                    
+                    # (重要) 转换为 Tag 集合, 以便高效管理和防止重复分配
+                    available_unit_tags = {u.tag for u in available_combat_units} 
+
+                    print(f"可用单位{len(available_unit_tags)}")
+
+                    if len(available_unit_tags) > 5 and self.flag_test:
+                        plans.append("Launch OFFENSE with 2 Marauder, 1 Marine, targeting OrbitalCommand")
+                        self.flag_test = False
+                    elif len(available_unit_tags) > 10:
+                        plans.append("Launch OFFENSE with 10 Marauder, 16 Marine, targeting OrbitalCommand")
+                        self.flag_test = True
+
+
+                    # AdjestAgent 接收 plans 列表并进行分类
+                    classified_results = self.adjest_agent.run(plans)
+                    
+                    # (重要) AdjestAgent 内部会保存累积的日志文件。
+                    # 我们在这里 logging [当前轮次] 的结果
+                    self.logging("classified_plan_results", classified_results, save_trace=True, print_log=False)
+                    
+                    # (可选) 额外记录标准攻击指令，以便在主日志中快速查看
+                    standard_commands = classified_results.get("standard_attack_commands", [])
+                    self.logging("standard_attack_commands_this_run", standard_commands, save_trace=True, print_log=True)
+
+                    # --- [!! 新增的集成点 !!] ---
+                    if standard_commands:
+                        # 将 AdjestAgent 识别出的攻击指令
+                        # 传递给新的攻击执行器
+                        await self.execute_llm_attacks(standard_commands)
+                    # --- [!! 新增结束 !!] ---
                         
-                        # (重要) AdjestAgent 内部会保存累积的日志文件。
-                        # 我们在这里 logging [当前轮次] 的结果
-                        self.logging("classified_plan_results", classified_results, save_trace=True, print_log=False)
-                        
-                        # (可选) 额外记录标准攻击指令，以便在主日志中快速查看
-                        self.logging("standard_attack_commands_this_run", classified_results.get("standard_attack_commands", []), save_trace=True, print_log=True)
-                        
-                    except Exception as e:
-                        # 确保即使 adjest_agent 失败，游戏也不会崩溃
-                        print(f"Error running AdjestAgent: {e}")
-                        self.logging("adjest_agent_error", str(e), save_trace=True)
+
                 # --- [!! 修改结束 !!] ---
 
-                actions, action_think, action_chat_history = self.action_agent.run(obs_text, plans, verifier=self.action_verifier)
-                self.logging("actions", actions, save_trace=True)
-                self.logging("action_think", action_think, save_trace=True, print_log=False)
-                self.logging("action_chat_history", action_chat_history, save_trace=True, print_log=False)
+                # (重要) ActionAgent 仍然会运行
+                # 但 base_player.py 中的 run_actions 已经阻止了 "ATTACK" 指令,
+                # 所以这里的 actions 列表只包含 "Other Task" (如建造、训练)
+                other_commands = classified_results.get("other_tasks", [])
+                if other_commands:
+                    actions, action_think, action_chat_history = self.action_agent.run(obs_text, other_commands, verifier=self.action_verifier)
+                    self.logging("actions", actions, save_trace=True)
+                    self.logging("action_think", action_think, save_trace=True, print_log=False)
+                    self.logging("action_chat_history", action_chat_history, save_trace=True, print_log=False)
+                else:
+                    actions = []
             else:
+                # ... (else 分支保持不变)
                 actions, action_think, action_chat_history = self.agent.run(obs_text, verifier=self.action_verifier)
-                self.logging("actions", actions, save_trace=True)
-                self.logging("action_think", action_think, save_trace=True, print_log=False)
-                self.logging("action_chat_history", action_chat_history, save_trace=True, print_log=False)
+                # ...
 
             await self.run_actions(actions)
             
